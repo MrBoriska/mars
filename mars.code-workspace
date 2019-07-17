@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "/home/mrboriska/youbot1_catkin_ws"
+		}
+	],
+	"settings": {
+		"python.autoComplete.extraPaths": [
+			"/home/mrboriska/mars/devel/lib/python2.7/dist-packages",
+			"/home/mrboriska/t21l51_project/t21l51-robot-2d/devel/lib/python2.7/dist-packages",
+			"/opt/ros/melodic/lib/python2.7/dist-packages"
+		],
+		"files.associations": {
+			"cmath": "cpp",
+			"qthread": "cpp"
+		},
+		"ros.distro": "kinetic"
+	}
+}

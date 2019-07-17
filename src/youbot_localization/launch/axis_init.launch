@@ -1,0 +1,39 @@
+<launch>
+    <arg name="camera_name" default="camera" />
+    <arg name="enable_theora" default="1" />
+    <arg name="enable_ptz" default="0" /> <!-- not workin.. fuck-->
+    <arg name="enable_ptz_teleop" default="0" />
+
+    <group ns="$(arg camera_name)">
+        <param name="hostname" value="192.168.5.21" />
+        <param name="username" value="root" />
+        <param name="password" value="sensorika.info" />
+        <param name="width" value="704" />
+        <param name="height" value="576" />
+        <param name="frame_id" value="camera" />
+        <param name="cname" value="axis_camera" />
+        <param name="camera_info_url" value="package://youbot_localization/config/calibrate/axis_camera_calib.yaml"/>
+        <node pkg="axis_camera" type="axis.py" name="axis" />
+        <node pkg="axis_camera" type="axis_ptz.py" name="axis_ptz" if="$(arg enable_ptz)"/>
+
+        <node pkg="image_transport" type="republish" name="republish"
+            args="compressed" if="$(arg enable_theora)">
+            <remap from="in" to="image_raw" />
+            <remap from="out" to="image_raw" />
+        </node>
+
+        <node pkg="axis_camera" type="teleop.py" name="teleop" if="$(arg enable_ptz_teleop)">
+            <param name="enable_button" value="1" />
+            <param name="scale_pan_deg" value="25" />
+            <param name="scale_tilt_deg" value="25" />
+            <remap from="joy" to="/joy" />
+        </node>
+    </group>
+
+    <!-- To control the PTZ, issue commands like so:
+    rostopic pub /axis/cmd axis_camera/Axis '{ brightness: 5000, pan: 100, tilt: 10, zoom: 0, autofocus: True }'
+    NOTE: Don't forget to populate the brightness field, or
+            you'll get very dark images.
+    -->
+	<node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/>
+</launch>

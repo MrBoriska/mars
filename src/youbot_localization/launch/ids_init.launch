@@ -1,0 +1,32 @@
+<launch>
+  <arg name="camera_name" value="ids_xs_camera_L" />
+  <arg name="nodelet_manager_name" value="$(arg camera_name)_process" />
+
+  <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)" args="manager" output="screen" />
+
+  <node pkg="nodelet" type="nodelet" name="$(arg camera_name)_ueye_nodelet"
+        args="load ueye_cam/ueye_cam_nodelet /$(arg nodelet_manager_name)">
+    <param name="camera_name" type="str" value="$(arg camera_name)" /> <!-- == namespace for topics and services -->
+    <param name="frame_name" value="$(arg camera_name)"/>
+    <param name="camera_topic" type="str" value="image_raw" />
+    <param name="camera_id" type="int" value="1" /> <!-- 0 = any camera; 1+: camera ID -->
+    <param name="camera_intrinsics_file" type="string" value="$(find youbot_localization)/config/calibrate/$(arg camera_name).yaml" /> <!-- default: ~/.ros/camera_info/<camera_name>.yaml -->
+    <param name="camera_parameters_file" type="string" value="$(find youbot_localization)/config/$(arg camera_name).ini" /> <!-- default: ~/.ros/camera_conf/<camera_name>.ini -->
+
+    <rosparam file="$(find youbot_localization)/config/$(arg camera_name).yaml" command="load"/>
+  </node>
+  
+  <!-- De-Bayered image -->
+  <node ns="$(arg camera_name)" pkg="nodelet" type="nodelet" name="image_debayer"
+      args="load image_proc/debayer /$(arg nodelet_manager_name) --no-bond" respawn="true" output="screen">
+    <!--node pkg="image_proc" type="image_proc" name="image_rectify"-->
+  </node>
+  <!-- Rectifyed image -->
+  <node ns="$(arg camera_name)" pkg="nodelet" type="nodelet" name="image_rectify"
+      args="load image_proc/rectify /$(arg nodelet_manager_name) --no-bond" respawn="true" output="screen">
+    <!--node pkg="image_proc" type="image_proc" name="image_rectify"--> 
+    <remap from="image_mono" to="image_color"/>
+  </node>
+
+  <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/>
+</launch>

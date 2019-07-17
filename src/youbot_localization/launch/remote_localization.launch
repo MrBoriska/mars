@@ -1,0 +1,10 @@
+<launch>
+    <arg name="camera_name" value="ids_xs_camera_L" />
+
+    <include file="$(find youbot_localization)/launch/ids_init.launch">
+        <arg name="camera_name" value="$(arg camera_name)"/>
+    <include/>
+    <include file="$(find youbot_localization)/launch/apriltags_localization.launch">
+        <arg name="camera_name" value="$(arg camera_name)"/>
+    <include/>
+</launch>

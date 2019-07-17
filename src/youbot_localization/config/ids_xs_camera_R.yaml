@@ -1,0 +1,47 @@
+
+ext_trigger_mode: False #if False, then camera will operate in free-run mode; otherwise, frames need to be triggered by hardware signal (falling-edge) on digital input pin of camera
+
+# the following are optional camera configuration parameters:
+# they will be loaded on the camera after the .ini configuration
+# file, and before dynamic_reconfigure. That means that any
+# (lingering) dynamic parameters from dynamic_reconfigure will
+# override these values, and that these will override parameters
+# from the .ini file.
+# See http://www.ros.org/wiki/ueye_cam for more details.
+
+color_mode: bayer_rggb8 # valid options: 'rgb8', 'mono8', 'bayer_rggb8' -->
+
+# WARNING: the following 4 parameters specify dimensions for camera's area of interest. Values for image_width and image_height that are smaller than your camera's maximum values will result in cropped field of view. For typical cases, one should modify values for sensor_scaling / binning / subsampling to downsample the resulting ROS image to the desired dimensions, without losing potential field of view. -->
+image_width: 1280
+image_height: 720
+image_top: 0 #  -1: center -->
+image_left: 0 # -1: center -->
+
+subsampling: 1 #<!-- supported by only some UEye cameras -->
+binning: 1 #<!-- supported by only some UEye cameras -->
+sensor_scaling: 1.0 #<!-- supported by only some UEye cameras -->
+
+auto_gain: False
+master_gain: 35
+red_gain: 0
+green_gain: 1
+blue_gain: 16
+gain_boost: False
+
+auto_exposure: False
+exposure: 20 # <!-- in ms -->
+
+auto_white_balance: True
+white_balance_red_offset: 0
+white_balance_blue_offset: 0
+
+flash_delay: 0 #<!-- in us -->
+flash_duration: 1000 #<!-- in us -->
+
+auto_frame_rate: False
+frame_rate: 10
+output_rate: 0.0 # >0: throttle rate for publishing frames -->
+pixel_clock: 35
+
+flip_upd: False
+flip_lr: False

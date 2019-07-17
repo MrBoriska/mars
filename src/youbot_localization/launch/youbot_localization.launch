@@ -1,0 +1,12 @@
+<launch>
+    <arg name="remote_loc_ns_name" value="ids_xs_camera_L" />
+
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization">
+        <remap from="cmd_vel" to="cmd_vel" />
+        <!--remap from="odometry/filtered" to="/odom" /-->
+        <remap from="odom0_input" to="odom"/>
+        <remap from="pose0_input" to="/$(arg remote_loc_ns_name)/robot_pose">
+        <rosparam command="load" file="$(find youbot_localization)/config/ekf/localization.yaml"/>
+    </node>
+    
+</launch>

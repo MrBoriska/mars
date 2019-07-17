@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- Удаленный запуск на роботах -->
+  <!--
+  <machine name="youbot1" address="192.168.0.25" user="youbot" password="youbot" env-loader="/opt/ros/indigo/env.sh"/>
+  <machine name="youbot2" address="192.168.0.26" user="youbot" password="youbot" env-loader="/opt/ros/indigo/env.sh"/>
+
+  <include machine="youbot1" file="/opt/ros/indigo/share/youbot_driver_ros_interface/launch/youbot_driver.launch"/>
+  <include machine="youbot2" file="/opt/ros/indigo/share/youbot_driver_ros_interface/launch/youbot_driver.launch"/>
+  -->
+
+  <node name="sgur" pkg="sgur_control" type="run.py" output="screen"/>
+
+</launch>

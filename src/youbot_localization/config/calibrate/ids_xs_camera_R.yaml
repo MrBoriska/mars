@@ -1,0 +1,20 @@
+image_width: 1280
+image_height: 720
+camera_name: ids_xs_camera_R
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [1351.980307, 0.000000, 641.285679, 0.000000, 1353.400939, 351.473625, 0.000000, 0.000000, 1.000000]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.184932, -0.352420, 0.007858, 0.006752, 0.000000]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 1.000000]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [1389.855713, 0.000000, 647.755343, 0.000000, 0.000000, 1394.627686, 355.809481, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000]

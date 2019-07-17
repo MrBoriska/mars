@@ -1,0 +1,10 @@
+<launch>
+
+  	<arg name="camera_name" value="ids_xs_camera_L" />
+	<node pkg="camera_calibration" type="cameracalibrator.py" output="screen"
+	    name="calibrator"
+		args="--size 8x6 --square 0.025 image:=/$(arg camera_name)/image_raw camera:=/$(arg camera_name)">
+		<!-- size - количество внутренних углов шахматного узора (8х6 соответсвует узору из 9х7)
+		scuare - размер стороны квадрата в метрах -->
+	</node>
+</launch>
