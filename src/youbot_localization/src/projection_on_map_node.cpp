@@ -69,11 +69,21 @@ int main(int argc, char ** argv)
       tf_msg_rob2d.transform.translation.x = ray[0]*t;
       tf_msg_rob2d.transform.translation.y = ray[1]*t;
       tf_msg_rob2d.transform.translation.z = ray[2]*t;
-      // set old orientation (must be match)
-      tf_msg_rob2d.transform.rotation.x = tr_to_rob.getRotation().getX();
-      tf_msg_rob2d.transform.rotation.y = tr_to_rob.getRotation().getY();
-      tf_msg_rob2d.transform.rotation.z = tr_to_rob.getRotation().getZ();
-      tf_msg_rob2d.transform.rotation.w = tr_to_rob.getRotation().getW();
+      
+      // orientation on surface (estimate)
+      double roll, pitch, yaw;
+      tf::Matrix3x3(tr_to_map.getRotation()).getRPY(roll, pitch, yaw);
+      tf_msg_rob2d.transform.rotation = tf::createQuaternionMsgFromRollPitchYaw(
+        roll,
+        pitch,
+        tf::getYaw(tr_to_rob.getRotation())
+      );
+      
+      //tf_msg_rob2d.transform.rotation.x = tr_to_rob.getRotation().getX();
+      //tf_msg_rob2d.transform.rotation.y = tr_to_rob.getRotation().getY();
+      ////tf_msg_rob2d.transform.rotation.z = tr_to_rob.getRotation().getZ();
+      //tf_msg_rob2d.transform.rotation.w = tr_to_rob.getRotation().getW();
+      
       tf_msg_rob2d.header.stamp = ros::Time::now();
 
       robot2d_tf.sendTransform(tf_msg_rob2d);
