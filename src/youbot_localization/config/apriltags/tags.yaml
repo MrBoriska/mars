@@ -15,7 +15,8 @@
 standalone_tags:
    [
      {id: 125, size: 0.125, name: "__125__"},
-     {id: 276, size: 0.176, name: "__276__"}
+     {id: 276, size: 0.176, name: "__276__"},
+     {id: 0, size: 0.173, name: "ids_xs_camera_L/robot_0"}
    ]
 # ## Tag bundle definitions
 # ### Remarks

@@ -33,12 +33,12 @@ int main(int argc, char ** argv)
   nh_priv.param<double>("publish_frequency",publish_frequency,10);
 
   geometry_msgs::TransformStamped tf_msg_rob2d;
-  tf_msg_rob2d.header.frame_id = robot_frame + "_2d";
-  tf_msg_rob2d.child_frame_id = robot_frame;
+  tf_msg_rob2d.header.frame_id = camera_frame;
+  tf_msg_rob2d.child_frame_id = robot_frame + "_2d";
 
   // create the listener
   tf::TransformListener listener;
-  listener.waitForTransform(map_frame, robot_frame, ros::Time(), ros::Duration(1.0));
+  //listener.waitForTransform(map_frame, camera_frame, ros::Time(), ros::Duration(1.0));
 
   ros::Rate rate(publish_frequency);
   while (nh.ok())
@@ -74,6 +74,7 @@ int main(int argc, char ** argv)
       tf_msg_rob2d.transform.rotation.y = tr_to_rob.getRotation().getY();
       tf_msg_rob2d.transform.rotation.z = tr_to_rob.getRotation().getZ();
       tf_msg_rob2d.transform.rotation.w = tr_to_rob.getRotation().getW();
+      tf_msg_rob2d.header.stamp = ros::Time::now();
 
       robot2d_tf.sendTransform(tf_msg_rob2d);
     }

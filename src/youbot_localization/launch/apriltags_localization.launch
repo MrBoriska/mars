@@ -7,7 +7,7 @@
     <arg name="image_topic" default="image_rect" />
 
     <group ns="$(arg camera_frame)">
-        <param name="tf_prefix" value="$(arg camera_frame)" />
+        <!--param name="tf_prefix" value="$(arg camera_frame)" /-->
         <!-- Set parameters -->
         <rosparam command="load" file="$(find youbot_localization)/config/apriltags/settings.yaml" ns="$(arg node_namespace)" />
         <rosparam command="load" file="$(find youbot_localization)/config/apriltags/tags.yaml" ns="$(arg node_namespace)" />
@@ -31,15 +31,15 @@
         <node pkg="youbot_localization" type="projection_on_map_node" name="projection_on_map_node">
             <param name="camera_frame" type="str" value="$(arg camera_frame)"/>
             <param name="map_frame" type="str" value="/map"/>
-            <param name="robot_frame" type="str" value="robot_2"/>
-            <param name="publish_frequency" value="10"/>
+            <param name="robot_frame" type="str" value="$(arg camera_frame)/robot_0"/>
+            <param name="publish_frequency" value="100"/>
             <param name="is_stamped" type="bool" value="true"/>
         </node>
 
         <!-- Publishing position (robot_pose topic) of robot relative map -->
         <node pkg="youbot_localization" type="tags_tf_to_robot_pos_node" name="tf_to_pos_node">
             <param name="map_frame" type="str" value="/map"/>
-            <param name="robot_frame" type="str" value="robot_2_2d"/>
+            <param name="robot_frame" type="str" value="$(arg camera_frame)/robot_0_2d"/>
             <param name="publish_frequency" value="10"/>
             <param name="is_stamped" type="bool" value="true"/>
         </node>
