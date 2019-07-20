@@ -1,0 +1,17 @@
+<launch>
+  <arg name="use_rviz" default="false"/>
+  <arg name="use_rqt" default="true"/>
+  <arg name="des_rviz_file" default="$(find youbot_launcher)/config/youbot.rviz"/>
+
+  <node pkg="youbot_launcher" type="simple_detector.py" name="simple_detector_node"/>
+
+  <!-- Tools -->
+  <node pkg="youbot_launcher" type="timed_rosrun.sh" if="$(eval arg('use_rviz') == true)"
+     args="0 rviz rviz -d $(arg des_rviz_file)"
+     name="timed_rosrun_rviz" output="screen">
+  </node>
+  <node pkg="youbot_launcher" type="timed_rosrun.sh" if="$(eval arg('use_rqt') == true)"
+     args="0 rqt_gui rqt_gui"
+     name="timed_rosrun_rqt" output="screen">
+  </node>
+</launch>
