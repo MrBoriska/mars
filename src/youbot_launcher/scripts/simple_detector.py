@@ -10,6 +10,7 @@ import rospy
 from copy import deepcopy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import JointState
+from std_msgs.msg import Float64
 
 from Tkinter import Tk, Label
 
@@ -21,15 +22,26 @@ def cbJS(js):
         js.effort[2],
         js.effort[3]
     )
-    js.velocity = (
-        js.velocity[0],
-        velocity,
-        js.velocity[2],
-        js.velocity[3]
+    #js.velocity = (
+    #    js.velocity[0],
+    #    velocity,
+    #    js.velocity[2],
+    #    js.velocity[3]
+    #)
+
+    js.position = (
+        js.position[0],
+        filter.mu,
+        js.position[2],
+        js.position[3]
     )
+    if cbJS.t0 == 0:
+        cbJS.t0 = js.header.stamp
+    js.header.stamp = js.header.stamp - cbJS.t0
 
     jsf_pub.publish(js)
 
+cbJS.t0 = 0
 
 
 def predictLin(x1, t2):
@@ -120,8 +132,9 @@ def filter(z1, z2, stamp):
     
     # this mu is real, if slip was detected
     if filter.mu != 0:
+        pass
         #print filter.mu
-        mu_label.config(text='%.2f' % round(filter.mu, 2))
+        #mu_label.config(text='%.2f' % round(filter.mu, 2))
         #mu_label.pack()
     else:
         mu_label.config(text="unknown")
@@ -146,16 +159,17 @@ filter.Eq = filter.x_cov
 if __name__ == '__main__':
     rospy.init_node('tester', anonymous=True)
     jsf_pub = rospy.Publisher('/joint_states_filtered', JointState, queue_size=10)
+    #mu_pub = rospy.Publisher('/detected_mu', Float64, queue_size=10)
     js_subr = rospy.Subscriber("/joint_states", JointState, cbJS)
 
     # create window
-    root = Tk()
-    root.title("Mu value detected:")
-    root.geometry("500x500+100+100")
-    mu_label = Label(root, text="unknown")
-    mu_label.config(font=('times', 48, 'bold'))
-    mu_label.pack()
+    #root = Tk()
+    #root.title("Mu value detected:")
+    #root.geometry("500x500+100+100")
+    #mu_label = Label(root, text="unknown")
+    #mu_label.config(font=('times', 48, 'bold'))
+    #mu_label.pack()
     # run window process
-    root.mainloop()
+    #root.mainloop()
     rospy.spin()
 
