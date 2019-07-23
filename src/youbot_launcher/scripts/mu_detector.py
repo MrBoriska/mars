@@ -7,21 +7,24 @@ import rospy
 from std_msgs.msg import Bool, Float64
 from sensor_msgs.msg import JointState
 from nav_msgs.msg import Odometry
-
+import tf
+from math import pi, fabs
 from Tkinter import Tk, Label
 
-
+# Simple class for vectors math
 class Vec(object):
     def __init__(self, x, y):
         self.x = x
         self.y = y
     
+    def rot(self, a):
+        return new Vec(self.x*cos(a)-self.y*sin(a), self.x*sin(a)+self.y*cos(a))
     def __abs__(self):
         return (self.x*self.x + self.y*self.y) ** 0.5
     def __add__(self, v):
-        return Vec(self.x + v.x, self.y + v.y)
+        return new Vec(self.x + v.x, self.y + v.y)
     def __sub__(self, v):
-        return Vec(self.x - v.x, self.y - v.y)
+        return new Vec(self.x - v.x, self.y - v.y)
     def __mul__(self, v):
         return self.x*v.x + self.y*v.y
 
@@ -38,32 +41,44 @@ def detector():
     if not IsSlipMsg.data:
         return
     
-    # todo: need considering y component of velocity too
-    v = OdomMsg.twist.twist.linear.x
+    # Rc vector
     w = OdomMsg.twist.twist.angular.z
-    Rc = new Vec(v/w, 0)
-
-    #todo: need getting by urdf model and wheel frames
-    rb_l = iter([Vec(0.1,0.1),Vec(0.1,0.1),Vec(0.1,0.1),Vec(0.1,0.1)])
-
-    #Calc mu slip parameter(linear moving)
-    r = 0.0475
-    m = (20+5.3+5)/4 #need dynamic model... maybe
+    V = new Vec(OdomMsg.twist.twist.linear.x, OdomMsg.twist.twist.linear.y)
+    Rc = V.rot(pi/2)/w
     
     friction_states = list()
+
+    #Names iterator of wheel tf frames
+    names_iter = iter(JSFMsg.name)
     for x in JSFMsg.effort:
-        rb = next(rb_l)
-        Rw = Rc - rb
-        cos_alfa = Rw.dot(Rc)/(abs(Rw) * abs(Rc))
+
+        # Getting wheel position
+        try:
+            (trans, rot) = tf_listener.lookupTransform(robot_frame, next(names_iter), rospy.Time(0))
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
         
-        mu = x/(cos_alfa*r*m*9.81)
+        # Create radius-vector for wheel position
+        rb = new Vec(trans[0], trans[1])
+
+        # Radius-vector from wheel to ICC
+        Rw = Rc - rb
+
+        # Angle of direction force of the friction
+        cos_alfa = (Rw*Rc)/(fabs(Rw) * fabs(Rc))
+        
+        # Force of normal reaction
+        N = gravity*robot_mass/4 #need dynamic model... maybe
+
+        # Goal!
+        mu = x/(cos_alfa*wheel_radius*N)
         
         mu_ros_data = Float64()
         mu_ros_data.data = mu
         friction_states.append(mu_ros_data)
     
     #Print Mu value
-    mu_label.config(text='%.2f,%.2f,%.2f,%.2f' % tuple(friction_states))
+    mu_label.config(text='%.2f,%.2f,%.2f,%.2f' % tuple([x.data for x in friction_states]))
     mu_label.pack()
 
 
@@ -81,9 +96,16 @@ if __name__ == '__main__':
     slippage_subr = rospy.Subscriber("/is_slip", Bool, cb_slippage)
     #friction_js_pub = rospy.Publisher("/friction_joint_states", FrictionJointState, queue_size=10)
 
+    robot_frame = rospy.get_param("~robot_frame", default="base_foorprint")
+    wheel_radius = rospy.get_param("~wheel_radius", default=0.0475)
+    gravity = rospy.get_param("~gravity", default=9.81)
+    robot_mass = rospy.get_param("~robot_mass", default=20+5.3+5)
+
     OdomMsg = Odometry()
     JSFMsg = JointState()
     IsSlipMsg = Bool()
+
+    tf_listener = tf.TransformListener()
 
     # create window
     root = Tk()
@@ -94,6 +116,7 @@ if __name__ == '__main__':
     mu_label.pack()
     # run window process
     root.mainloop()
+
 
     # Run detection process
     rate = rospy.Rate(10)
