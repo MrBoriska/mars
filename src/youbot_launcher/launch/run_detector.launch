@@ -2,8 +2,22 @@
   <arg name="use_rviz" default="false"/>
   <arg name="use_rqt" default="true"/>
   <arg name="des_rviz_file" default="$(find youbot_launcher)/config/youbot.rviz"/>
-
-  <node pkg="youbot_launcher" type="simple_detector.py" name="simple_detector_node"/>
+  
+  <node pkg="youbot_launcher" type="slippage_detector.py" name="slippage_detector_node">
+     <remap from="/is_slippage" to="is_slippage"/>
+     <remap from="/odom" to="odom"/>
+     <remap from="/odom/filtered" to="odom/filtered"/>
+  </node>
+  
+  <node pkg="youbot_launcher" type="mu_detector.py" name="mu_detector_node">
+     <remap from="/odom/filtered" to="odom/filtered"/>
+     <remap from="/joint_states" to="joint_states"/>
+     <remap from="/is_slippage" to="is_slippage"/>
+     
+     <param name="robot_frame" value="base_footprint"/>
+     <param name="wheel_radius" type="double" value="0.0475"/>
+     <param name="robot_mass" type="double" value="30.5"/>
+  </node>
 
   <!-- Tools -->
   <node pkg="youbot_launcher" type="timed_rosrun.sh" if="$(eval arg('use_rviz') == true)"
