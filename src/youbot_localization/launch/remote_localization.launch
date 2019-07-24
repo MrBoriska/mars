@@ -1,7 +1,14 @@
 <launch>
-    <arg name="camera_name" value="ids_xs_camera_L" />
+    <arg name="camera_name" default="ids_xs_camera_L" />
+    <arg name="play_from_bag" default=""/>
 
-    <include file="$(find youbot_localization)/launch/ids_init.launch">
+    <include if="$(eval arg('play_from_bag') != '')"
+             file="$(find youbot_localization)/launch/init_cam_from_rosbag.launch">
+        <arg name="camera_name" value="$(arg camera_name)"/>
+        <arg name="bag_file_name" value="$(arg play_from_bag)"/>
+    </include>
+    <include if="$(eval arg('play_from_bag') == '')"
+             file="$(find youbot_localization)/launch/ids_init.launch">
         <arg name="camera_name" value="$(arg camera_name)"/>
     </include>
     <include file="$(find youbot_localization)/launch/apriltags_localization.launch">
