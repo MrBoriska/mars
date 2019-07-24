@@ -11,6 +11,8 @@ import tf
 from math import pi, fabs
 from Tkinter import Tk, Label
 
+from youbot_launcher.msg import FrictionJointState
+
 # Simple class for vectors math
 class Vec(object):
     def __init__(self, x, y):
@@ -46,7 +48,7 @@ def detector():
     V = new Vec(OdomMsg.twist.twist.linear.x, OdomMsg.twist.twist.linear.y)
     Rc = V.rot(pi/2)/w
     
-    friction_states = list()
+    new_friction_states = list()
 
     #Names iterator of wheel tf frames
     names_iter = iter(JSFMsg.name)
@@ -75,8 +77,9 @@ def detector():
         
         mu_ros_data = Float64()
         mu_ros_data.data = mu
-        friction_states.append(mu_ros_data)
+        new_friction_states.append(mu_ros_data)
     
+    friction_states = new_friction_states
     #Print Mu value
     mu_label.config(text='%.2f,%.2f,%.2f,%.2f' % tuple([x.data for x in friction_states]))
     mu_label.pack()
@@ -93,10 +96,10 @@ if __name__ == '__main__':
     rospy.init_node('mu_detector', anonymous=True)
     js_subr = rospy.Subscriber("/joint_states", JointState, cb_jsf)
     odom_subr = rospy.Subscriber("/odometry/filtered", Odometry, cb_odom)
-    slippage_subr = rospy.Subscriber("/is_slip", Bool, cb_slippage)
-    #friction_js_pub = rospy.Publisher("/friction_joint_states", FrictionJointState, queue_size=10)
+    slippage_subr = rospy.Subscriber("/is_slippage", Bool, cb_slippage)
+    friction_js_pub = rospy.Publisher("/friction_joint_states", FrictionJointState, queue_size=10)
 
-    robot_frame = rospy.get_param("~robot_frame", default="base_foorprint")
+    robot_frame = rospy.get_param("~robot_frame", default="base_footprint")
     wheel_radius = rospy.get_param("~wheel_radius", default=0.0475)
     gravity = rospy.get_param("~gravity", default=9.81)
     robot_mass = rospy.get_param("~robot_mass", default=20+5.3+5)
@@ -125,7 +128,7 @@ if __name__ == '__main__':
 
         detector()
 
-        #friction_js_pub.publish(friction_states)
+        friction_js_pub.publish(friction_states)
 
         rate.sleep()
 
