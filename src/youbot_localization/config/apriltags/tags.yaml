@@ -16,7 +16,10 @@ standalone_tags:
    [
      {id: 125, size: 0.125, name: "__125__"},
      {id: 276, size: 0.176, name: "__276__"},
-     {id: 0, size: 0.173, name: "ids_xs_camera_L/robot_0"}
+     {id: 0, size: 0.173, name: "ids_xs_camera_L/robot_0"},
+     #{id: 2, size: 0.173, name: "map_2"},
+     #{id: 3, size: 0.173, name: "map_3"},
+     #{id: 4, size: 0.173, name: "map_4"}
    ]
 # ## Tag bundle definitions
 # ### Remarks
@@ -46,8 +49,8 @@ tag_bundles:
       layout:
         [
           {id: 1, size: 0.173, x: 0, y: 0, z: 0, qw: 1, qx: 0, qy: 0, qz: 0}, # <^
-          {id: 2, size: 0.173, x: -2, y: 0, z: 0, qw: 1, qx: 0, qy: 0, qz: 0}, # ^>
-          {id: 3, size: 0.173, x: -2, y: 2, z: 0, qw: 1, qx: 0, qy: 0, qz: 0}, # _>
+          {id: 2, size: 0.173, x: 0.639, y: 0.003, z: 0, qw: 1, qx: 0, qy: 0, qz: 0}, # ^>
+          {id: 3, size: 0.173, x: 0.643, y: -0.855, z: 0, qw: 1, qx: 0, qy: 0, qz: 0}, # _>
           {id: 4, size: 0.173, x: 0, y: 2, z: 0, qw: 1, qx: 0, qy: 0, qz: 0}  # <_
         ]
     },
