@@ -1,6 +1,9 @@
 [submodule "src/youbot_description"]
 	url = https://github.com/youbot/youbot_description.git
+	path = src/youbot_description
 [submodule "src/apriltag_ros"]
 	url = https://github.com/AprilRobotics/apriltag_ros.git
+	path = src/apriltag_ros
 [submodule "src/apriltag"]
 	url = https://github.com/AprilRobotics/apriltag.git
+	path = src/apriltag
