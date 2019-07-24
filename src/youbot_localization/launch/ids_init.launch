@@ -1,6 +1,7 @@
 <launch>
   <arg name="camera_name" default="ids_xs_camera_L" />
   <arg name="nodelet_manager_name" default="$(arg camera_name)_process" />
+  <arg name="use_rqt" default="true"/>
 
   <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)" args="manager" output="screen" />
 
@@ -28,5 +29,5 @@
     <remap from="image_mono" to="image_color"/>
   </node>
 
-  <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/>
+  <node if="$(arg use_rqt)" pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/>
 </launch>

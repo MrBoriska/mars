@@ -1,5 +1,6 @@
 <launch>
   <arg name="camera_name" default="ids_xs_camera_L" />
+  <arg name="use_rqt" default="true"/>
   <arg name="bag_file_name" default="test1"/>
 
   <param name="use_sim_time" value="true"/>
@@ -7,5 +8,5 @@
   <node pkg="rosbag" type="play" name="camera_player"
         args="--clock /home/mrboriska/mars_bags/$(arg bag_file_name).bag"/>
 
-  <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/>
+  <node if="$(arg use_rqt)" pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/>
 </launch>

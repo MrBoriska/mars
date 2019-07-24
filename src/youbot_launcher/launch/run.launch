@@ -25,7 +25,7 @@
 
   <!-- Run remote localization system -->
   <node pkg="youbot_launcher" type="timed_roslaunch.sh"
-     args="0 youbot_localization remote_localization.launch camera_name:=ids_xs_camera_L"
+     args="0 youbot_localization remote_localization.launch camera_name:=ids_xs_camera_L use_rqt:=false use_rviz:=false"
      name="timed_roslaunch_youbot_remote_localization" output="screen">
   </node>
 

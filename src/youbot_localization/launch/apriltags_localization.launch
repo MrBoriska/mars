@@ -1,4 +1,5 @@
 <launch>
+    <arg name="use_rviz" default="true"/>
     <arg name="rviz_file" default="$(find youbot_localization)/config/localization.rviz"/>
 
     <arg name="node_namespace" default="apriltags2_ros_continuous_node" />
@@ -31,7 +32,7 @@
         <node pkg="youbot_localization" type="projection_on_map_node" name="projection_on_map_node">
             <param name="camera_frame" type="str" value="$(arg camera_frame)"/>
             <param name="map_frame" type="str" value="/map"/>
-            <param name="robot_frame" type="str" value="$(arg camera_frame)/robot_0"/>
+            <param name="robot_frame" type="str" value="$(arg camera_frame)/robot_2"/>
             <param name="publish_frequency" value="100"/>
             <param name="is_stamped" type="bool" value="true"/>
         </node>
@@ -39,12 +40,12 @@
         <!-- Publishing position (robot_pose topic) of robot relative map -->
         <node pkg="youbot_localization" type="tags_tf_to_robot_pos_node" name="tf_to_pos_node">
             <param name="map_frame" type="str" value="/map"/>
-            <param name="robot_frame" type="str" value="$(arg camera_frame)/robot_0_2d"/>
+            <param name="robot_frame" type="str" value="$(arg camera_frame)/robot_2_2d"/>
             <param name="publish_frequency" value="10"/>
             <param name="is_stamped" type="bool" value="true"/>
         </node>
 
     </group>
 
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rviz_file)"/>
+    <node if="$(arg use_rviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(arg rviz_file)"/>
 </launch>
