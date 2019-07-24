@@ -20,13 +20,13 @@ class Vec(object):
         self.y = y
     
     def rot(self, a):
-        return new Vec(self.x*cos(a)-self.y*sin(a), self.x*sin(a)+self.y*cos(a))
+        return Vec(self.x*cos(a)-self.y*sin(a), self.x*sin(a)+self.y*cos(a))
     def __abs__(self):
         return (self.x*self.x + self.y*self.y) ** 0.5
     def __add__(self, v):
-        return new Vec(self.x + v.x, self.y + v.y)
+        return Vec(self.x + v.x, self.y + v.y)
     def __sub__(self, v):
-        return new Vec(self.x - v.x, self.y - v.y)
+        return Vec(self.x - v.x, self.y - v.y)
     def __mul__(self, v):
         return self.x*v.x + self.y*v.y
 
@@ -45,7 +45,7 @@ def detector():
     
     # Rc vector
     w = OdomMsg.twist.twist.angular.z
-    V = new Vec(OdomMsg.twist.twist.linear.x, OdomMsg.twist.twist.linear.y)
+    V = Vec(OdomMsg.twist.twist.linear.x, OdomMsg.twist.twist.linear.y)
     Rc = V.rot(pi/2)/w
     
     new_friction_states = list()
@@ -61,7 +61,7 @@ def detector():
             continue
         
         # Create radius-vector for wheel position
-        rb = new Vec(trans[0], trans[1])
+        rb = Vec(trans[0], trans[1])
 
         # Radius-vector from wheel to ICC
         Rw = Rc - rb
@@ -84,16 +84,8 @@ def detector():
     mu_label.config(text='%.2f,%.2f,%.2f,%.2f' % tuple([x.data for x in friction_states]))
     mu_label.pack()
 
-
-filter.t0 = 0
-filter.mu = 0
-filter.x_cov = 5.0
-filter.u_cov = 0.7
-filter.x = 0
-filter.Eq = filter.x_cov
-
 if __name__ == '__main__':
-    rospy.init_node('mu_detector', anonymous=True)
+    rospy.init_node('mu_detector_node', anonymous=True)
     js_subr = rospy.Subscriber("/joint_states", JointState, cb_jsf)
     odom_subr = rospy.Subscriber("/odometry/filtered", Odometry, cb_odom)
     slippage_subr = rospy.Subscriber("/is_slippage", Bool, cb_slippage)

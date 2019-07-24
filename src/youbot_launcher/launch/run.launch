@@ -1,31 +1,31 @@
 <launch>
-  <arg name="use_rviz" default="false"/>
+  <arg name="use_rviz" default="true"/>
   <arg name="use_rqt" default="true"/>
-  <arg name="des_rviz_file" default="$(find youbot_remote)/config/youbot.rviz"/>
+  <arg name="des_rviz_file" default="$(find youbot_launcher)/config/youbot.rviz"/>
 
   <machine name="youbot2"
             address="youbot2"
             env-loader="~/mars/youbot2_env_loader.sh"
             user="youbot" password="youbot"/>
-  <machine name="tp15-aspire-2"
+  <!--machine name="tp15-aspire-2"
             address="tp15-aspire-2"
             env-loader="~/mars/aspire2_env_loader.sh"
-            user="student" password="123"/>
+            user="student" password="123"/-->
   
   <!-- Run youbot 2 driver -->
   <node machine="youbot2" pkg="youbot_launcher" type="timed_roslaunch.sh"
-     args="0 roslaunch youbot_driver_ros_interface youbot_driver.launch"
+     args="0 youbot_driver_ros_interface youbot_driver.launch"
      name="timed_roslaunch_youbot_driver" output="screen">
   </node>
 
   <node machine="youbot2" pkg="youbot_launcher" type="timed_roslaunch.sh"
-     args="0 roslaunch youbot_localization youbot_localization.launch"
+     args="0 youbot_localization youbot_localization.launch"
      name="timed_roslaunch_youbot_localization" output="screen">
   </node>
 
   <!-- Run remote localization system -->
-  <node machine="tp15-aspire-2" pkg="youbot_launcher" type="timed_roslaunch.sh"
-     args="0 roslaunch youbot_localization remote_localization.launch camera_name=ids_xs_camera_L"
+  <node pkg="youbot_launcher" type="timed_roslaunch.sh"
+     args="0 youbot_localization remote_localization.launch camera_name:=ids_xs_camera_L"
      name="timed_roslaunch_youbot_remote_localization" output="screen">
   </node>
 
@@ -35,7 +35,7 @@
      name="timed_rosrun_rviz" output="screen">
   </node>
   <node pkg="youbot_launcher" type="timed_rosrun.sh" if="$(eval arg('use_rqt') == true)"
-     args="6 rqt_gui rqt_gui"
+     args="0 rqt_gui rqt_gui"
      name="timed_rosrun_rqt" output="screen">
   </node>
 </launch>

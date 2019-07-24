@@ -31,8 +31,8 @@ def cb_odom_by_pos(odom_msg):
     odom_by_pos = odom_msg
 
 if __name__ == '__main__':
-    rospy.init_node('tester', anonymous=True)
-    is_slippage_pubr = rospy.Publisher('/is_slippage', Bool)
+    rospy.init_node('slippage_detector_node', anonymous=True)
+    is_slippage_pubr = rospy.Publisher('/is_slippage', Bool, queue_size=10)
     w_odom_subr = rospy.Subscriber("/odom", Odometry, cb_odom_by_wheel)
     p_odom_subr = rospy.Subscriber("/odom/filtered", Odometry, cb_odom_by_pos)
 
@@ -41,6 +41,8 @@ if __name__ == '__main__':
 
     rate = rospy.Rate(30)
     while rospy.is_shutdown():
+        rospy.spin()
+
         iss_msg = Bool()
         
         if compare(odom_by_pos, odom_by_wheel):

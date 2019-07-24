@@ -1,9 +1,9 @@
 source /opt/ros/indigo/setup.bash
-source ~/mars_project/devel/setup.bash
+source ~/mars/devel/setup.bash
 
 # enable features for network control (by ROS)
 export ROS_NAMESPACE=youbot1
 export ROS_MASTER_URI=http://youbot1:11311/
 export ROS_IP=youbot1
 export ROSLAUNCH_SSH_UNKNOWN=1
-export YOUBOT_HOME=/home/youbot/mars_project/src/youbot_remote/scripts/youbot-py
+export YOUBOT_HOME=/home/youbot/mars/src/youbot_launcher/scripts/

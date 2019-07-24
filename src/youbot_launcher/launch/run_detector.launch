@@ -1,6 +1,6 @@
 <launch>
   <arg name="use_rviz" default="false"/>
-  <arg name="use_rqt" default="true"/>
+  <arg name="use_rqt" default="false"/>
   <arg name="des_rviz_file" default="$(find youbot_launcher)/config/youbot.rviz"/>
   
   <node pkg="youbot_launcher" type="slippage_detector.py" name="slippage_detector_node">
@@ -20,11 +20,11 @@
   </node>
 
   <!-- Tools -->
-  <node pkg="youbot_launcher" type="timed_rosrun.sh" if="$(eval arg('use_rviz') == true)"
+  <node pkg="youbot_launcher" type="timed_rosrun.sh" if="$(arg use_rviz)"
      args="0 rviz rviz -d $(arg des_rviz_file)"
      name="timed_rosrun_rviz" output="screen">
   </node>
-  <node pkg="youbot_launcher" type="timed_rosrun.sh" if="$(eval arg('use_rqt') == true)"
+  <node pkg="youbot_launcher" type="timed_rosrun.sh" if="$(arg use_rqt)"
      args="0 rqt_gui rqt_gui"
      name="timed_rosrun_rqt" output="screen">
   </node>
