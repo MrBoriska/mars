@@ -8,10 +8,10 @@ from std_msgs.msg import Bool, Float64
 from sensor_msgs.msg import JointState
 from nav_msgs.msg import Odometry
 import tf
-from math import pi, fabs
+from math import pi, fabs, cos, sin
 from Tkinter import Tk, Label
-
-from youbot_launcher.msg import FrictionJointState
+import threading
+#from youbot_launcher.msg import FrictionJointState
 
 # Simple class for vectors math
 class Vec(object):
@@ -29,6 +29,8 @@ class Vec(object):
         return Vec(self.x - v.x, self.y - v.y)
     def __mul__(self, v):
         return self.x*v.x + self.y*v.y
+    def __div__(self, a):
+        return Vec(self.x/a, self.y/a)
 
 def cb_odom(odom_msg):
     OdomMsg = odom_msg
@@ -40,7 +42,7 @@ def cb_slippage(is_slippage_msg):
     IsSlipMsg = is_slippage_msg    
 
 def detector():
-    if not IsSlipMsg.data:
+    if IsSlipMsg.data:
         return
     
     # Rc vector
@@ -48,6 +50,7 @@ def detector():
     V = Vec(OdomMsg.twist.twist.linear.x, OdomMsg.twist.twist.linear.y)
     Rc = V.rot(pi/2)/w
     
+    global new_friction_states
     new_friction_states = list()
 
     #Names iterator of wheel tf frames
@@ -89,7 +92,7 @@ if __name__ == '__main__':
     js_subr = rospy.Subscriber("/joint_states", JointState, cb_jsf)
     odom_subr = rospy.Subscriber("/odometry/filtered", Odometry, cb_odom)
     slippage_subr = rospy.Subscriber("/is_slippage", Bool, cb_slippage)
-    friction_js_pub = rospy.Publisher("/friction_joint_states", FrictionJointState, queue_size=10)
+    #friction_js_pub = rospy.Publisher("/friction_joint_states", FrictionJointState, queue_size=10)
 
     robot_frame = rospy.get_param("~robot_frame", default="base_footprint")
     wheel_radius = rospy.get_param("~wheel_radius", default=0.0475)
@@ -110,18 +113,20 @@ if __name__ == '__main__':
     mu_label.config(font=('times', 48, 'bold'))
     mu_label.pack()
     # run window process
-    root.mainloop()
+    root.update()
 
 
     # Run detection process
     rate = rospy.Rate(10)
-    while rospy.is_shutdown():
-        #rospy.spin()
+    while not rospy.is_shutdown():
+        rospy.spin()
+        root.update()
 
-        detector()
-
-        friction_js_pub.publish(friction_states)
+        if OdomMsg != Odometry() and JSFMsg != JointState():
+            detector()
+            friction_js_pub.publish(friction_states)
 
         rate.sleep()
 
-
+    #root.mainloop()
+    root.destroy()

@@ -40,7 +40,7 @@ if __name__ == '__main__':
     odom_by_wheel = Odometry()
 
     rate = rospy.Rate(30)
-    while rospy.is_shutdown():
+    while not rospy.is_shutdown():
         rospy.spin()
 
         iss_msg = Bool()
