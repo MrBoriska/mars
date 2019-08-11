@@ -6,11 +6,13 @@
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
-                "~/mars/devel/include",
                 "/opt/ros/kinetic/include",
-                "~/mars/src/ueye_cam/include",
+                "~/mars/src/mars_controller/include",
                 "~/mars/src/youbot_localization/include",
-                "/usr/include"
+                "/usr/include",
+                "/usr/include/x86_64-linux-gnu/qt5/QtWidgets",
+                "/usr/include/x86_64-linux-gnu/qt5/QtCore",
+                "/usr/include/x86_64-linux-gnu/qt5/QtWebSockets"
             ],
             "name": "Linux",
             "intelliSenseMode": "gcc-x64",

@@ -15,7 +15,10 @@
 		],
 		"files.associations": {
 			"cmath": "cpp",
-			"qthread": "cpp"
+			"qthread": "cpp",
+			"qjsondocument": "cpp",
+			"qjsonobject": "cpp",
+			"qvector2d": "cpp"
 		},
 		"ros.distro": "kinetic"
 	}
