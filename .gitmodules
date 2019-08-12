@@ -1,5 +1,5 @@
 [submodule "src/youbot_description"]
-	url = https://github.com/youbot/youbot_description.git
+	url = https://github.com/MrBoriska/youbot_description.git
 	path = src/youbot_description
 [submodule "src/apriltag_ros"]
 	url = https://github.com/AprilRobotics/apriltag_ros.git
