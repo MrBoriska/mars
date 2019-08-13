@@ -2,17 +2,34 @@ joint_state_controller:
   type: joint_state_controller/JointStateController
   publish_rate: 50
 
+wheel_fl_vel_controller:
+    type: "effort_controllers/JointVelocityController"
+    joint: wheel_joint_fl
+    pid: {p: 1.0, i: 1.0, d: 0.0}
+wheel_bl_vel_controller:
+    type: "effort_controllers/JointVelocityController"
+    joint: wheel_joint_bl
+    pid: {p: 1.0, i: 1.0, d: 0.0}
+wheel_fr_vel_controller:
+    type: "effort_controllers/JointVelocityController"
+    joint: wheel_joint_fr
+    pid: {p: 1.0, i: 1.0, d: 0.0}
+wheel_br_vel_controller:
+    type: "effort_controllers/JointVelocityController"
+    joint: wheel_joint_br
+    pid: {p: 1.0, i: 1.0, d: 0.0}
+
 diff_drive_controller:
   type: "diff_drive_controller/DiffDriveController"
-  left_wheel: ['base_to_r_f_wheel', 'base_to_r_b_wheel']
-  right_wheel: ['base_to_l_f_wheel', 'base_to_l_b_wheel']
+  left_wheel: ['wheel_joint_fl', 'wheel_joint_bl']
+  right_wheel: ['wheel_joint_fr', 'wheel_joint_br']
   publish_rate: 50
   pose_covariance_diagonal: [0.01, 0.01, 1000000.0, 1000000.0, 1000000.0, 100.0]
   twist_covariance_diagonal: [0.01, 1.0, 1000000.0, 1000000.0, 1000000.0, 100.0]
   cmd_vel_timeout: 0.25
 
   # Base frame_id
-  base_frame_id: root_link
+  base_frame_id: base_link
   allow_multiple_cmd_vel_publishers: true
 
 
