@@ -42,26 +42,19 @@
          <arg name="headless" value="false"/>
       </include>
 
-      <!-- Spawn robot in gazebo -->
       <param name="robot_description"
-            command="$(find xacro)/xacro --inorder
-                  '$(find youbot_description)/robots/youbot_base_only.urdf.xacro'" />
+        command="$(find xacro)/xacro --inorder
+              '$(find youbot_description)/robots/youbot_base_only.urdf.xacro'" />
 
-      <node name="youbot_spawn" pkg="gazebo_ros" type="spawn_model" output="screen"
-            args="-urdf -param robot_description -model youbot"/>
-
-      <rosparam command="load" file="$(find youbot_launcher)/config/youbot_sim_controllers.yaml" />
-
-      <!-- spawn controllers -->
-      <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
-       output="screen" args="joint_state_controller
-                              wheel_fl_vel_controller
-                              wheel_bl_vel_controller
-                              wheel_fr_vel_controller
-                              wheel_br_vel_controller" />
-
-      <!-- Convert joint states to TF transforms -->
-      <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen"/>
+      <!-- Spawn robot in gazebo -->
+      <include file="$(find youbot_launcher)/launch/spawn.launch">
+         <arg name="robot_name" value="youbot1"/>
+         <arg name="robot_pos" value="-x 0 -y 0.5"/>
+      </include>
+      <include file="$(find youbot_launcher)/launch/spawn.launch">
+         <arg name="robot_name" value="youbot2"/>
+         <arg name="robot_pos" value="-x 0 -y -0.5"/>
+      </include>
   </group>
 
 

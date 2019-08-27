@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Youbot 11
       Splitter Ratio: 0.5
     Tree Height: 428
   - Class: rviz/Selection
@@ -49,73 +50,6 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
-      Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        base_footprint:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_laser_front_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        caster_link_bl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        caster_link_br:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        caster_link_fl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        caster_link_fr:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        wheel_link_bl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wheel_link_br:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wheel_link_fl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wheel_link_fr:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-      Name: RobotModel
-      Robot Description: robot_description
-      TF Prefix: ""
-      Update Interval: 0
-      Value: true
-      Visual Enabled: true
     - Class: rviz/Axes
       Enabled: false
       Length: 1
@@ -123,24 +57,95 @@ Visualization Manager:
       Radius: 0.100000001
       Reference Frame: base_footprint
       Value: false
-    - Alpha: 1
-      Class: rviz/Effort
+    - Class: rviz/Group
+      Displays:
+        - Alpha: 1
+          Class: rviz/RobotModel
+          Collision Enabled: false
+          Enabled: true
+          Links:
+            All Links Enabled: true
+            Expand Joint Details: false
+            Expand Link Details: false
+            Expand Tree: false
+            Link Tree Style: Links in Alphabetic Order
+            base_footprint:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            base_laser_front_link:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            base_link:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            caster_link_bl:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            caster_link_br:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            caster_link_fl:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            caster_link_fr:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            wheel_link_bl:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            wheel_link_br:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            wheel_link_fl:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            wheel_link_fr:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+          Name: RobotModel
+          Robot Description: robot_description
+          TF Prefix: youbot1
+          Update Interval: 0
+          Value: true
+          Visual Enabled: true
+        - Alpha: 1
+          Class: rviz/Effort
+          Enabled: true
+          History Length: 1
+          Joints:
+            {}
+          Name: Effort
+          Robot Description: robot_description
+          Scale: 1
+          Topic: /youbot1/joint_states
+          Unreliable: false
+          Value: true
+          Width: 0.100000001
       Enabled: true
-      History Length: 1
-      Joints:
-        {}
-      Name: Effort
-      Robot Description: robot_description
-      Scale: 1
-      Topic: /joint_states
-      Unreliable: false
-      Value: true
-      Width: 0.100000001
+      Name: Youbot 1
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base_footprint
+    Fixed Frame: youbot1/base_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -151,25 +156,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.01670575
+      Distance: 3.9232986
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: -0.139631957
+        Y: 0.00438386062
+        Z: -0.454143316
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.570398152
+      Pitch: 0.565397859
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.19358349
+      Yaw: 4.06858492
     Saved: ~
 Window Geometry:
   Displays:

@@ -29,7 +29,7 @@ diff_drive_controller:
   cmd_vel_timeout: 0.25
 
   # Base frame_id
-  base_frame_id: base_link
+  base_frame_id: base_footprint
   allow_multiple_cmd_vel_publishers: true
 
 

@@ -1,0 +1,33 @@
+<launch>
+  <arg name="robot_name" default="youbot1"/>
+  <arg name="robot_pos" default="-x 0 -y 0 -z 0"/>
+  <arg name="use_diff_drive" default="true"/>
+  
+  <group ns="$(arg robot_name)" >
+    <param name="tf_prefix" value="$(arg robot_name)"/>
+    <!-- Spawn robot in gazebo -->
+    <node name="youbot_spawn" pkg="gazebo_ros" type="spawn_model" output="screen"
+          args="$(arg robot_pos) -urdf -param /robot_description -model $(arg robot_name) -robot_namespace $(arg robot_name)" respawn="false"/>
+
+    
+    <!-- spawn controllers -->
+    <rosparam command="load" file="$(find youbot_launcher)/config/youbot_sim_controllers.yaml" />
+    <rosparam param="diff_drive_controller/base_frame_id" subst_value="True">$(arg robot_name)/base_footprint</rosparam>
+    <rosparam param="diff_drive_controller/odom_frame_id" subst_value="True">$(arg robot_name)/wheels_odom</rosparam>
+    <node unless="$(arg use_diff_drive)" name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+      output="screen" args="--namespace=/$(arg robot_name)
+                          joint_state_controller
+                          wheel_fl_vel_controller
+                          wheel_bl_vel_controller
+                          wheel_fr_vel_controller
+                          wheel_br_vel_controller" />
+    
+    <node if="$(arg use_diff_drive)" name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+      output="screen" args="--namespace=/$(arg robot_name)
+                            joint_state_controller
+                            diff_drive_controller" />
+    
+    <!-- Convert joint states to TF transforms -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen"/>
+  </group>
+</launch>
