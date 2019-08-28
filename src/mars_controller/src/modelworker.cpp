@@ -8,10 +8,11 @@
 
 #include <QGraphicsItem>
 
-ModelWorker::ModelWorker(ModelConfig *config_, QObject *parent) : QObject(parent)
+ModelWorker::ModelWorker(ModelConfig *config_, QNode *qnode_, QObject *parent) : QObject(parent)
 {
     timer = 0;
     config = config_;
+    qnode = qnode_;
 
     started = false;
     current_time = 0;
@@ -21,6 +22,7 @@ ModelWorker::ModelWorker(ModelConfig *config_, QObject *parent) : QObject(parent
     groupPos.object_pos.pos.y = 0.0;
     groupPos.object_pos.pos.alfa = 0.0;
     groupPos.object_pos.pos.k = 0.0;
+
 }
 
 ModelWorker::~ModelWorker()
@@ -99,6 +101,16 @@ void ModelWorker::simulateStep()
     mutex.lock();
 
     groupPos = trackMap.at(current_index);
+    
+    // send to ROS robots control system
+    qnode->sendGoal(
+        groupPos.object_pos.vel.x,
+        groupPos.object_pos.vel.w,
+        QPointF(
+            groupPos.object_pos.pos.x,
+            groupPos.object_pos.pos.y
+        )
+    );
 
     current_index++;
     current_time += config->interval/config->target_realtime_factor;

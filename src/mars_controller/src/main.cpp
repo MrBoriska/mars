@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    MainLogic *model = new MainLogic();
+    MainLogic *model = new MainLogic(argc, argv);
     
     /* 
     need open and close by mainlogic class and etc.

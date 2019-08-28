@@ -1,6 +1,7 @@
 #include "mars_controller/mainlogic.h"
 
-MainLogic::MainLogic(QObject *parent) : QObject(parent)
+MainLogic::MainLogic(int argc, char** argv, QObject *parent)
+: QObject(parent), qnode(argc,argv)
 {
     modelThread = 0;
     modelWorker = 0;
@@ -22,7 +23,10 @@ MainLogic::MainLogic(QObject *parent) : QObject(parent)
     connect(cs_service, SIGNAL(cs_get_pos_request()),
             this,       SLOT(cs_get_pos_request()));
 
+    connect(&qnode, SIGNAL(rosShutdown()), this, SLOT(cs_stop()));
+
     cs_service->init();
+    (&qnode)->init();
 }
 
 void MainLogic::cs_simulateStarted(){
@@ -39,7 +43,7 @@ void MainLogic::cs_start() {
     //modelThread = new QThread;
 
     if (modelWorker == 0) {
-        modelWorker = new ModelWorker(modelConfig);
+        modelWorker = new ModelWorker(modelConfig, &qnode);
         //modelWorker->moveToThread(modelThread);
 
         //connect(modelThread, SIGNAL(finished()), modelWorker, SLOT(deleteLater()));
@@ -76,9 +80,13 @@ void MainLogic::cs_set_start_pos(GroupPos gpos) {
 void MainLogic::cs_get_pos_request() {
 
     if (modelWorker != 0) {
+        GroupPos grpos = modelWorker->getCurrentPos();
+        long int currtime = modelWorker->getCurrentTime();
+        
+        // send to MARS GUI
         cs_service->send_positions(
-            modelWorker->getCurrentPos(),
-            modelWorker->getCurrentTime()
+            grpos,
+            currtime
         );
     } else {
         cs_service->send_positions(

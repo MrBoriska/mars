@@ -1,0 +1,10 @@
+<launch>
+    <arg name="use_rqt" default="true"/>
+
+    <node pkg="mars_controller" type="mars_controller" name="mars_controller_node"/>
+    
+    <node pkg="youbot_launcher" type="timed_rosrun.sh" if="$(eval arg('use_rqt') == true)"
+        args="0 rqt_gui rqt_gui"
+        name="timed_rosrun_rqt" output="screen">
+    </node>
+</launch>

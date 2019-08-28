@@ -57,11 +57,13 @@ set( QT_SOURCES
     src/modelconfig.cpp
     src/controlsysservice.cpp
     src/mainlogic.cpp
+    src/qnode.cpp
 
     include/mars_controller/modelworker.h
     include/mars_controller/modelconfig.h
     include/mars_controller/controlsysservice.h
     include/mars_controller/mainlogic.h
+    include/mars_controller/qnode.h
     )
 
 ##############################################################################

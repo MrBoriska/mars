@@ -18,7 +18,8 @@
 			"qthread": "cpp",
 			"qjsondocument": "cpp",
 			"qjsonobject": "cpp",
-			"qvector2d": "cpp"
+			"qvector2d": "cpp",
+			"iostream": "cpp"
 		},
 		"ros.distro": "kinetic"
 	}

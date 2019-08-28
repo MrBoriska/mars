@@ -7,11 +7,13 @@
 #include "modelworker.h"
 #include "controlsysservice.h"
 
+#include "qnode.h"
+
 class MainLogic : public QObject
 {
     Q_OBJECT
 public:
-    explicit MainLogic(QObject *parent = 0);
+    explicit MainLogic(int, char**, QObject *parent = 0);
 
     QThread *modelThread;
     ModelWorker *modelWorker;
@@ -29,6 +31,9 @@ public slots:
     void cs_set_track_path(QPainterPath tpath);
     void cs_set_start_pos(GroupPos gpos);
     void cs_get_pos_request();
+
+private:
+    QNode qnode;
 
 };
 

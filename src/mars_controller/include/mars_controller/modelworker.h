@@ -6,13 +6,14 @@
 #include <QTime>
 
 #include "modelconfig.h"
+#include "qnode.h"
 
 class ModelWorker: public QObject
 {
     Q_OBJECT
 
 public:
-    ModelWorker(ModelConfig *config, QObject *parent = 0);
+    ModelWorker(ModelConfig *config, QNode *qnode, QObject *parent = 0);
     ~ModelWorker();
 
     GroupPos getCurrentPos();
@@ -35,6 +36,8 @@ signals:
     void simulateStopped();
 
 private:
+    QNode *qnode;
+
     QTimer *timer;
     ModelConfig *config;
     QMutex mutex;
