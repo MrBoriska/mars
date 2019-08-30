@@ -38,8 +38,38 @@ void ModelWorker::simulate()
     current_time = 0;
     this->groupPos = config->getStartPosition();
 
+
+    /**
+     * >----------------------------------------------------<
+     * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+     * May be run ROS node here? (by QT hard SLOT connection)
+     * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+     * (and send number of robots)
+     * >----------------------------------------------------<
+     * */
+
+    // send to ROS robots control system
+    int units_count = groupPos.robots_pos.size();
+    for (int robot_id = 0; robot_id < units_count; robot_id++) {
+        qnode->sendGoal(
+            robot_id,
+            // velocity
+            0.0,
+            0.0,
+            // target position (for next step)
+            QPointF(
+                groupPos.robots_pos[robot_id].pos.x,
+                groupPos.robots_pos[robot_id].pos.y
+            ),
+            // current time (relative to the start time)
+            current_time
+        );
+    }
+    
     genTrackPoints();
+
     if (timer == 0) {
+        // TODO: need synchronize by ROS simulation time
         timer = new QTimer(this);
         connect(timer, SIGNAL(timeout()), this, SLOT(simulateStep()));
     }
@@ -75,6 +105,22 @@ void ModelWorker::stop_simulate()
         this->started = false;
         mutex.unlock();
     }
+
+    // send to ROS robots control system
+    int units_count = groupPos.robots_pos.size();
+    for (int robot_id = 0; robot_id < units_count; robot_id++) {
+        qnode->sendGoal(
+            robot_id,
+            0.0,
+            0.0,
+            QPointF(
+                groupPos.robots_pos[robot_id].pos.x,
+                groupPos.robots_pos[robot_id].pos.y
+            ),
+            current_time
+        );
+    }
+
     emit simulateStopped();
     qDebug() << "simulateStopped()";
 }
@@ -99,18 +145,26 @@ void ModelWorker::simulateStep()
 
     // Блокируем доступ к памяти для других потоков
     mutex.lock();
-
-    groupPos = trackMap.at(current_index);
     
+    groupPos = trackMap.at(current_index);
+
     // send to ROS robots control system
-    qnode->sendGoal(
-        groupPos.object_pos.vel.x,
-        groupPos.object_pos.vel.w,
-        QPointF(
-            groupPos.object_pos.pos.x,
-            groupPos.object_pos.pos.y
-        )
-    );
+    int units_count = groupPos.robots_pos.size();
+    for (int robot_id = 0; robot_id < units_count; robot_id++) {
+        qnode->sendGoal(
+            robot_id,
+            // velocity
+            groupPos.robots_pos[robot_id].vel.x,
+            groupPos.robots_pos[robot_id].vel.w,
+            // target position (for next step)
+            QPointF(
+                groupPos.robots_pos[robot_id].pos.x,
+                groupPos.robots_pos[robot_id].pos.y
+            ),
+            // current time (relative to the start time)
+            current_time
+        );
+    }
 
     current_index++;
     current_time += config->interval/config->target_realtime_factor;
@@ -196,13 +250,13 @@ double ModelWorker::genRmax(QList<RobotState> robots, ItemPos object_pos)
  * @brief ModelWorker::genVmax
  * @param robots
  * @param object_pos
- * @param Rmax - (мм) радиус до максимально удаленного от центра робота
+ * @param Rmax - (cм) радиус до максимально удаленного от центра робота
  * @return Vmax (м/c)
  */
 double ModelWorker::genVmax(QList<RobotState> robots, ItemPos object_pos, double Rmax)
 {
     qreal dT = (double)(config->interval)/1000; // мс -> с
-    Rmax /= 1000; // мм -> м
+    Rmax /= 100; // cм -> м
     GroupPos grSt_start = config->getStartPosition();
 
     // Максимальная заданная скорость
@@ -213,6 +267,7 @@ double ModelWorker::genVmax(QList<RobotState> robots, ItemPos object_pos, double
 
     for(int i=0;i<rc;i++) {
 
+        // Find material object under robot
         QGraphicsPolygonItem* item = (QGraphicsPolygonItem *)(config->sceneObject->itemAt(
                                           robots[i].pos.x,
                                           robots[i].pos.y, QTransform()
@@ -221,10 +276,13 @@ double ModelWorker::genVmax(QList<RobotState> robots, ItemPos object_pos, double
         if (!item) {
             return robots[i].vel.x;
         }
+        
+        // Get material information
         ItemMaterial mat = config->getItemMaterialByColor(item->brush().color());
 
-        qDebug() << mat.title << "for " << i;
+        // qDebug() << mat.title << "for " << i;
 
+        // По окружности
         if (object_pos.k != 0.0) {
             // Радиус-вектор поворота робота
             double R = (
@@ -237,7 +295,7 @@ double ModelWorker::genVmax(QList<RobotState> robots, ItemPos object_pos, double
                 )
             ).length();
 
-            R /= 1000; // мм -> м
+            R /= 100; // cм -> м
 
             // Исходя из ограничений для текущего робота, вычисляем максимальную скорость для Rmax робота
             // Учет ограничения на максимальное нормальное ускорение
@@ -249,6 +307,8 @@ double ModelWorker::genVmax(QList<RobotState> robots, ItemPos object_pos, double
             // торможения
             V = double(robots[i].vel.x - mat.acct_max * dT)*Rmax/R;
             if (V > Vmax) Vmax = V;
+        
+        // Прямолинейное
         } else {
             // Учет ограничения на максимальное тангенциальное ускорение разгона
             V = double(robots[i].vel.x + mat.acct_max * dT);
@@ -335,7 +395,7 @@ QList<RobotState> ModelWorker::getRobotsStates(GroupPos grSt, double Vmax, doubl
             rpos.alfa += alfa;
 
             rvel.x = Vmax*R_.length()/Rmax;
-            rvel.w = rvel.x/R_.length();
+            rvel.w = rvel.x/(R_.length()/100);
 
         } else {
             // Ориентация робота при прямолинейном движении неизменна
@@ -423,11 +483,13 @@ void ModelWorker::genTrackPoints()
                     ItemVel vel;
                     vel.x = Vmax;
                     vel.w = 0.0;
+                    qDebug() << "lin" << vel.w;
                     grSt.object_pos.vel = vel;
                 } else {
                     ItemVel vel;
                     vel.x = fabs(Vmax*R0/Rmax);
-                    vel.w = vel.x/R0;
+                    vel.w = vel.x/(R0/100);
+                    qDebug() << "rot" << vel.w;
                     grSt.object_pos.vel = vel;
                 }
 
@@ -444,7 +506,7 @@ void ModelWorker::genTrackPoints()
                     }
                     pos = this->catmullrom(p,Tension,P0,P1,P2,P3);
                     dpos = pos - QPointF(grSt.object_pos.pos.x,grSt.object_pos.pos.y);
-                    ds = QVector2D(dpos).length()/1000;
+                    ds = QVector2D(dpos).length()/100;
 
                     j++;
                 }

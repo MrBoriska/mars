@@ -4,7 +4,7 @@ ModelConfig::ModelConfig(QObject *parent) : QObject(parent)
 {
     step = 0.001;
     interval = 10;
-    target_realtime_factor = 1.0;
+    target_realtime_factor = 0.45;
     vel_max = 0.5; // m/s
 
     step_max = 3;
@@ -12,7 +12,7 @@ ModelConfig::ModelConfig(QObject *parent) : QObject(parent)
     interval_max = 10;
     interval_min = 4;
 
-    sceneSize = QSize(1000,700);
+    sceneSize = QSize(1000,700); // см х см
     sceneBorderWidth = 15;
     sceneObject = new QGraphicsScene();
 

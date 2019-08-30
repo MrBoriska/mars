@@ -10,6 +10,8 @@
 #include <QThread>
 #include <QStringListModel>
 #include <QPointF>
+#include <QList>
+#include <nav_msgs/Odometry.h>
 
 
 /*****************************************************************************
@@ -19,12 +21,19 @@
 class QNode : public QThread {
     Q_OBJECT
 public:
-	QNode(int argc, char** argv );
+	QNode(int argc, char** argv);
 	virtual ~QNode();
+
+	// Init ROS node and loop
 	bool init();
 	bool init(const std::string &master_url, const std::string &host_url);
+	
+	// calling in new thread from start() function (into init() function)
 	void run();
-	void sendGoal(double vx, double w, QPointF goal_pos);
+
+	// sender command to move goal
+	void sendGoal(int robot_id, double vx, double w, QPointF goal_pos, long int rel_time);
+
 
 Q_SIGNALS:
     void rosShutdown();
@@ -32,7 +41,11 @@ Q_SIGNALS:
 private:
 	int init_argc;
 	char** init_argv;
-	ros::Publisher cmd_vel_pub;
+	QList<ros::Publisher> cmd_vel_pubs;
+	QList<nav_msgs::Odometry> odom_msgs;
+
+	// Callbacks
+	void robotposCallback(const nav_msgs::Odometry::ConstPtr& msg);
 };
 
 #endif /* QNODE_HPP_ */
