@@ -19,7 +19,9 @@
 			"qjsondocument": "cpp",
 			"qjsonobject": "cpp",
 			"qvector2d": "cpp",
-			"iostream": "cpp"
+			"iostream": "cpp",
+			"*.tcc": "cpp",
+			"string": "cpp"
 		},
 		"ros.distro": "kinetic"
 	}

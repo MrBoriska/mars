@@ -1,7 +1,8 @@
 <launch>
     <arg name="use_rqt" default="true"/>
+    <arg name="launch-prefix" default=""/>
 
-    <node pkg="mars_controller" type="mars_controller" name="mars_controller_node"/>
+    <node pkg="mars_controller" type="mars_controller" name="mars_controller_node" launch-prefix="$(arg launch-prefix)"/>
     
     <node pkg="youbot_launcher" type="timed_rosrun.sh" if="$(eval arg('use_rqt') == true)"
         args="0 rqt_gui rqt_gui"
