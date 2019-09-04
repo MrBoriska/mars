@@ -3,6 +3,7 @@
 #include <string>
 #include <geometry_msgs/Twist.h>
 #include <sstream>
+#include <cstdio>
 #include "mars_controller/qnode.h"
 
 #include <QDebug>
@@ -26,51 +27,52 @@ QNode::~QNode() {
 
 void QNode::robotposCallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
-	if (msg->header.frame_id == "youbot1/base_footprint")
-  		this->odom_msgs[0] = *msg;
-	else
-		this->odom_msgs[1] = *msg;
-	
+	// checking frame id format
+	if (msg->header.frame_id.find("youbot") != 0)
+		return;
+	// get robot number by "youbotN/base_footprint" frame id
+	int robot_number = std::stoi(
+		msg->header.frame_id.substr(6, msg->header.frame_id.find("/"))
+	);
+	robot_number--;
+	// saving
+	this->odom_msgs[robot_number] = *msg;
 }
 
-bool QNode::init() {
+bool QNode::init(int robots_num) {
 	ros::init(init_argc,init_argv,"mars_controller_node");
 	if ( ! ros::master::check() ) {
 		return false;
 	}
+
 	ros::start(); // explicitly needed since our nodehandle is going out of scope.
 	ros::NodeHandle n;
 	
 	// setting size (WTF?)
 	nav_msgs::Odometry odom_null;
-	odom_msgs.append(odom_null);
-	odom_msgs.append(odom_null);
 
-	// Init ROS velocity commands publishers
-	cmd_vel_pubs.append(n.advertise<geometry_msgs::Twist>("youbot1/cmd_vel", 1000));
-	cmd_vel_pubs.append(n.advertise<geometry_msgs::Twist>("youbot2/cmd_vel", 1000));
-	
-	// Init ROS subscriber for current robots positions
-	n.subscribe("youbot1/odom", 1000, &QNode::robotposCallback, this);
-	n.subscribe("youbot2/odom", 1000, &QNode::robotposCallback, this);
-	
-	start();
-	return true;
-}
+	for(int i=0;i < robots_num;i++) {
+		// increase odom_msgs object size
+		odom_msgs.append(odom_null);
 
-bool QNode::init(const std::string &master_url, const std::string &host_url) {
-	std::map<std::string,std::string> remappings;
-	remappings["__master"] = master_url;
-	remappings["__hostname"] = host_url;
-	ros::init(remappings,"mars_controller_node");
-	if ( ! ros::master::check() ) {
-		return false;
+		std::string robot_name = "youbot" + std::to_string(i);
+
+		// Init ROS velocity commands publishers
+		cmd_vel_pubs.append(
+			n.advertise<geometry_msgs::Twist>(
+				robot_name + "/cmd_vel",
+				1000
+			)
+		);
+	
+		// Init ROS subscriber for current robots positions
+		n.subscribe(
+			robot_name + "/cmd_vel",
+			1000,
+			&QNode::robotposCallback, this
+		);
 	}
-	ros::start(); // explicitly needed since our nodehandle is going out of scope.
-	ros::NodeHandle n;
-	
-	// Add your ros communications here.
-	
+
 	start();
 	return true;
 }
@@ -107,6 +109,7 @@ void QNode::sendGoal(int robot_id, double vx, double w, QPointF goal_pos, long i
 void QNode::run() {
 	ros::Rate loop_rate(50);
 	int count = 0;
+
 	while ( ros::ok() ) {
 
 		// Do something with ros

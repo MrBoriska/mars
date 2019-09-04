@@ -82,6 +82,7 @@ public:
 
     void setStartPosition(GroupPos s_pos);
     GroupPos getStartPosition();
+    int getRobotsNum();
 
     QList<ItemMaterial> materials;
     ItemMaterial defaultMaterial;

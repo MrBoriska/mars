@@ -79,6 +79,11 @@ QSize ModelConfig::getSceneSize()
     return sceneSize;
 }
 
+int ModelConfig::getRobotsNum()
+{
+    return this->startPos.robots_pos.size();
+}
+
 ItemMaterial ModelConfig::getItemMaterialByColor(QColor color)
 {
     foreach (ItemMaterial mat, materials) {

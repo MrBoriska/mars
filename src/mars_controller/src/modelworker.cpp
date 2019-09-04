@@ -38,16 +38,6 @@ void ModelWorker::simulate()
     current_time = 0;
     this->groupPos = config->getStartPosition();
 
-
-    /**
-     * >----------------------------------------------------<
-     * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     * May be run ROS node here? (by QT hard SLOT connection)
-     * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     * (and send number of robots)
-     * >----------------------------------------------------<
-     * */
-
     // send to ROS robots control system
     int units_count = groupPos.robots_pos.size();
     for (int robot_id = 0; robot_id < units_count; robot_id++) {

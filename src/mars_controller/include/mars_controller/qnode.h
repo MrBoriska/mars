@@ -25,9 +25,7 @@ public:
 	virtual ~QNode();
 
 	// Init ROS node and loop
-	bool init();
-	bool init(const std::string &master_url, const std::string &host_url);
-	
+	bool init(int robots_num);
 	// calling in new thread from start() function (into init() function)
 	void run();
 

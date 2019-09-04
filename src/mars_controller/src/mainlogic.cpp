@@ -26,7 +26,6 @@ MainLogic::MainLogic(int argc, char** argv, QObject *parent)
     connect(&qnode, SIGNAL(rosShutdown()), this, SLOT(cs_stop()));
 
     cs_service->init();
-    (&qnode)->init();
 }
 
 void MainLogic::cs_simulateStarted(){
@@ -43,6 +42,8 @@ void MainLogic::cs_start() {
     //modelThread = new QThread;
 
     if (modelWorker == 0) {
+        (&qnode)->init(modelConfig->getRobotsNum());
+
         modelWorker = new ModelWorker(modelConfig, &qnode);
         //modelWorker->moveToThread(modelThread);
 
@@ -59,6 +60,9 @@ void MainLogic::cs_start() {
 
         connect(cs_service, SIGNAL(cs_stop()),
                 modelWorker,SLOT(stop_simulate()));
+    } else {
+        //todo: update number of robots (depencities numbers of subscribers and publishers)
+        //(&qnode)->update(modelConfig);
     }
 
     //modelThread->start();
