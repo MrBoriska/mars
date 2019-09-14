@@ -13,6 +13,8 @@
 #include <QList>
 #include <nav_msgs/Odometry.h>
 
+#include "modelconfig.h"
+
 
 /*****************************************************************************
 ** Class
@@ -32,6 +34,9 @@ public:
 	// sender command to move goal
 	void sendGoal(int robot_id, double vx, double w, QPointF goal_pos, long int rel_time);
 
+	void setRealGroupPos(GroupPos *gpos);
+	// Callbacks
+	void robotposCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
 Q_SIGNALS:
     void rosShutdown();
@@ -40,10 +45,9 @@ private:
 	int init_argc;
 	char** init_argv;
 	QList<ros::Publisher> cmd_vel_pubs;
+	QList<ros::Subscriber> odom_subs;
 	QList<nav_msgs::Odometry> odom_msgs;
 
-	// Callbacks
-	void robotposCallback(const nav_msgs::Odometry::ConstPtr& msg);
 };
 
 #endif /* QNODE_HPP_ */

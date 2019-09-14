@@ -1,5 +1,5 @@
 <launch>
-    <arg name="use_rqt" default="true"/>
+    <arg name="use_rqt" default="false"/>
     <arg name="launch-prefix" default=""/>
 
     <node pkg="mars_controller" type="mars_controller" name="mars_controller_node" launch-prefix="$(arg launch-prefix)"/>

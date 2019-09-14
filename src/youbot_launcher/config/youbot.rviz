@@ -5,7 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Youbot 21
       Splitter Ratio: 0.5
     Tree Height: 428
   - Class: rviz/Selection
@@ -308,25 +307,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.26845551
+      Distance: 5.91051722
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.321733534
-        Y: 0.0385031477
-        Z: 0.228874981
+        X: -0.0514933839
+        Y: -0.0755276084
+        Z: -0.102270007
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.495397091
+      Pitch: 0.950397074
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.89359283
+      Yaw: 3.61359119
     Saved: ~
 Window Geometry:
   Displays:

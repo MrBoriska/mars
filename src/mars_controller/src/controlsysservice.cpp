@@ -344,6 +344,8 @@ QJsonObject ControlSysService::state_to_jsonObject(RobotState state)
     QJsonObject jo;
     jo.insert("pos", pos_to_jsonObject(state.pos));
     jo.insert("vel", vel_to_jsonObject(state.vel));
+    jo.insert("pos_real", pos_to_jsonObject(state.pos_real));
+    jo.insert("vel_real", vel_to_jsonObject(state.vel_real));
     return jo;
 }
 
@@ -400,6 +402,8 @@ RobotState ControlSysService::jsonObject_to_state(QJsonObject jo)
     RobotState state;
     state.pos = jsonObject_to_pos(jo.value("pos").toObject());
     state.vel = jsonObject_to_vel(jo.value("vel").toObject());
+    state.pos_real = jsonObject_to_pos(jo.value("pos_real").toObject());
+    state.vel_real = jsonObject_to_vel(jo.value("vel_real").toObject());
     return state;
 }
 

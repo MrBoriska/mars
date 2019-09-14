@@ -22,6 +22,8 @@ ModelWorker::ModelWorker(ModelConfig *config_, QNode *qnode_, QObject *parent) :
     groupPos.object_pos.pos.y = 0.0;
     groupPos.object_pos.pos.alfa = 0.0;
     groupPos.object_pos.pos.k = 0.0;
+    groupPos.object_pos.vel.x = 0.0;
+    groupPos.object_pos.vel.w = 0.0;
 
 }
 
@@ -125,6 +127,24 @@ void ModelWorker::simulateStep()
         mutex.lock();
         this->started = false;
         mutex.unlock();
+
+
+        // send to ROS robots control system
+        int units_count = groupPos.robots_pos.size();
+        for (int robot_id = 0; robot_id < units_count; robot_id++) {
+            qnode->sendGoal(
+                robot_id,
+                0.0,
+                0.0,
+                QPointF(
+                    groupPos.robots_pos[robot_id].pos.x,
+                    groupPos.robots_pos[robot_id].pos.y
+                ),
+                current_time
+            );
+        }
+
+
         emit simulateFinished();
         qDebug() << "simulateFinished()";
         return;
@@ -373,19 +393,19 @@ QList<RobotState> ModelWorker::getRobotsStates(GroupPos grSt, double Vmax, doubl
             // Радиус-вектор поворота робота
             QVector2D R_ = R0_+OA;
 
-            // Кривизна траектории движения робота(todo: нужен учет знака)
-            rpos.k = 1.0/R_.length();
-
             // Ориентация вектора скорости робота (в с.к. обьекта)
             QVector2D V = rotate(R_,(fabs(K)/K)*M_PI/2).normalized();
             // Ориентация робота соответственно (в с.к. обьекта)
             rpos.alfa = atan2(V.y(),V.x());
 
-            //qDebug() << "K" << K << "alfa:" << rpos.alfa;
+            // Кривизна траектории движения робота
+            rpos.k = (fabs(rpos.alfa)/rpos.alfa)/R_.length();
+
+            // Ориентация робота в с.к. карты
             rpos.alfa += alfa;
 
-            rvel.x = Vmax*R_.length()/Rmax;
-            rvel.w = rvel.x/(R_.length()/100);
+            rvel.x = Vmax*R_.length()/Rmax; // only > 0
+            rvel.w = -(fabs(rpos.k)/rpos.k)*rvel.x/(R_.length()/100);
 
         } else {
             // Ориентация робота при прямолинейном движении неизменна
@@ -473,13 +493,11 @@ void ModelWorker::genTrackPoints()
                     ItemVel vel;
                     vel.x = Vmax;
                     vel.w = 0.0;
-                    qDebug() << "lin" << vel.w;
                     grSt.object_pos.vel = vel;
                 } else {
                     ItemVel vel;
                     vel.x = fabs(Vmax*R0/Rmax);
                     vel.w = vel.x/(R0/100);
-                    qDebug() << "rot" << vel.w;
                     grSt.object_pos.vel = vel;
                 }
 

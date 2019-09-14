@@ -27,6 +27,8 @@ struct ItemVel {
 struct RobotState {
     ItemPos pos;
     ItemVel vel;
+    ItemPos pos_real;
+    ItemVel vel_real;
 };
 
 struct ItemMaterial {

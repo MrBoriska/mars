@@ -35,6 +35,7 @@ void QNode::robotposCallback(const nav_msgs::Odometry::ConstPtr& msg)
 		msg->header.frame_id.substr(6, msg->header.frame_id.find("/"))
 	);
 	robot_number--;
+	
 	// saving
 	this->odom_msgs[robot_number] = *msg;
 }
@@ -55,7 +56,7 @@ bool QNode::init(int robots_num) {
 		// increase odom_msgs object size
 		odom_msgs.append(odom_null);
 
-		std::string robot_name = "youbot" + std::to_string(i);
+		std::string robot_name = "youbot" + std::to_string(i+1);
 
 		// Init ROS velocity commands publishers
 		cmd_vel_pubs.append(
@@ -64,12 +65,14 @@ bool QNode::init(int robots_num) {
 				1000
 			)
 		);
-	
+
 		// Init ROS subscriber for current robots positions
-		n.subscribe(
-			robot_name + "/cmd_vel",
-			1000,
-			&QNode::robotposCallback, this
+		odom_subs.append(
+			n.subscribe(
+				robot_name + "/odom_abs",
+				1,
+				&QNode::robotposCallback, this
+			)
 		);
 	}
 
@@ -106,18 +109,28 @@ void QNode::sendGoal(int robot_id, double vx, double w, QPointF goal_pos, long i
 	cmd_vel_pubs[robot_id].publish(cmd_vel_msg);
 }
 
+void QNode::setRealGroupPos(GroupPos *gpos) {
+	if (this->odom_msgs.isEmpty()) return;
+	
+	int robots_num = gpos->robots_pos.size();
+
+	for (int robot_id=0;robot_id < robots_num;robot_id++) {
+		// vels
+		gpos->robots_pos[robot_id].vel_real.x = this->odom_msgs.at(robot_id).twist.twist.linear.x;
+		gpos->robots_pos[robot_id].vel_real.w = this->odom_msgs.at(robot_id).twist.twist.angular.z;
+		// poses (with convert from m to cm and revert y axis)
+		gpos->robots_pos[robot_id].pos_real.x = 100*(this->odom_msgs.at(robot_id).pose.pose.position.x);
+		gpos->robots_pos[robot_id].pos_real.y = -100*(this->odom_msgs.at(robot_id).pose.pose.position.y);
+	}
+}
+
 void QNode::run() {
 	ros::Rate loop_rate(50);
-	int count = 0;
 
 	while ( ros::ok() ) {
-
-		// Do something with ros
-
 		ros::spinOnce();
 		loop_rate.sleep();
 	}
-	std::cout << "Ros shutdown, proceeding to close the gui." << std::endl;
-	emit rosShutdown(); // used to signal the gui for a shutdown (useful to roslaunch)
+	emit rosShutdown(); // used to signal for a shutdown (useful to roslaunch)
 }
 

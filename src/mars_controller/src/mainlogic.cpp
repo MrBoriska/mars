@@ -87,6 +87,8 @@ void MainLogic::cs_get_pos_request() {
         GroupPos grpos = modelWorker->getCurrentPos();
         long int currtime = modelWorker->getCurrentTime();
         
+        (&qnode)->setRealGroupPos(&grpos);
+        
         // send to MARS GUI
         cs_service->send_positions(
             grpos,
