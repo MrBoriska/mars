@@ -80,32 +80,81 @@ bool QNode::init(int robots_num) {
 	return true;
 }
 
-void QNode::sendGoal(int robot_id, double vx, double w, QPointF goal_pos, long int rel_time) {
+void QNode::sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long int rel_time) {
 	
 	// Target velocity vector
 	geometry_msgs::Twist cmd_vel_msg;
 	cmd_vel_msg.linear.x = vx;
-	cmd_vel_msg.angular.z = w;
+	cmd_vel_msg.angular.z = w;	
 
-	// Current velocity vector
-	/*this->odom_msgs.at(robot_id).twist.twist.linear.x;
-	this->odom_msgs.at(robot_id).twist.twist.linear.y; // this may be non-zero (this expected)
-	this->odom_msgs.at(robot_id).twist.twist.angular.z;
+	if (vx != 0 || w != 0) {
+		// Current velocity vector (in global basis)
+		double cvx_x = this->odom_msgs.at(robot_id).twist.twist.linear.x;
+		double cvx_y = this->odom_msgs.at(robot_id).twist.twist.linear.y;
+		double cw = this->odom_msgs.at(robot_id).twist.twist.angular.z;
 
-	// Target position (without orientation)
-	goal_pos.x();
-	goal_pos.y();
+		// convert to robot basis (get x component, where y is zero)
+		double cvx = sqrt(cvx_x*cvx_x + cvx_y*cvx_y);
 
-	// Current position (without orientation)
-	this->odom_msgs.at(robot_id).pose.pose.position.x;
-	this->odom_msgs.at(robot_id).pose.pose.position.y;*/
+		// Target position (with orientation)
+		double gx = goal_pos.x();
+		double gy = goal_pos.y();
+		double ga = goal_pos.z();
+
+		// Current position (with orientation)
+		double cx = 100*(this->odom_msgs.at(robot_id).pose.pose.position.x);
+		double cy = -100*(this->odom_msgs.at(robot_id).pose.pose.position.y);
+		double ca = atan2(cvx_y, cvx_x);
+
+		//Calculate error vector
+		double ex = (gx-cx)*cos(ca)-(gy-cy)*sin(ca);
+		double ey = (gx-cx)*sin(ca)+(gy-cy)*cos(ca);
+
+		qDebug() << "Angle: " << QString::number(ca*180/3.14)
+				 << "Err: x:"
+		         << QString::number(ex)
+		         << " y:" << QString::number(ey);
+
+		double Pvx = 10.0;
+		double Pw = 10.0;
+
+		// P regulator
+		cmd_vel_msg.linear.x += Pvx*ex;
+		cmd_vel_msg.angular.z -= Pw*ey;
+
+		// set absolute restrictions
+		//if (cmd_vel_msg.linear.x > 0.6)
+		//	cmd_vel_msg.linear.x = 0.6;
+		if (cmd_vel_msg.linear.x < 0)
+			cmd_vel_msg.linear.x = 0.0;
+		//if (abs(cmd_vel_msg.angular.z) > 3.0)
+		//	cmd_vel_msg.angular.z = 3.0*abs(cmd_vel_msg.angular.z)/cmd_vel_msg.angular.z;
+
+		// set thresholds
+		double thres = 0.90;
+		if (cmd_vel_msg.linear.x > vx*(thres+1))
+			cmd_vel_msg.linear.x = vx*(thres+1);
+		if (cmd_vel_msg.linear.x < vx*(1.0-thres))
+			cmd_vel_msg.linear.x = vx*(1.0-thres);
+		/*if (fabs(cmd_vel_msg.angular.z) > fabs(w)*(thres+1))
+			cmd_vel_msg.angular.z = fabs(w)*(thres+1)*fabs(cmd_vel_msg.angular.z)/cmd_vel_msg.angular.z;
+		if (fabs(cmd_vel_msg.angular.z) < fabs(w)*(1.0-thres))
+			cmd_vel_msg.angular.z = fabs(w)*(1.0-thres)*fabs(cmd_vel_msg.angular.z)/cmd_vel_msg.angular.z;
+		*/
+		if (w > 0) {
+			if (cmd_vel_msg.angular.z > w*(thres+1))
+				cmd_vel_msg.angular.z = w*(thres+1);
+			if (cmd_vel_msg.angular.z < w*(1.0-thres))
+				cmd_vel_msg.angular.z = w*(1.0-thres);
+		} else {
+			if (cmd_vel_msg.angular.z < w*(thres+1))
+				cmd_vel_msg.angular.z = w*(thres+1);
+			if (cmd_vel_msg.angular.z > w*(1.0-thres))
+				cmd_vel_msg.angular.z = w*(1.0-thres);
+		}
 
 
-	/**
-	 * How calculate velocity commad on robot? (by this data)
-	 * */
-
-
+	}
 	cmd_vel_pubs[robot_id].publish(cmd_vel_msg);
 }
 
@@ -116,7 +165,9 @@ void QNode::setRealGroupPos(GroupPos *gpos) {
 
 	for (int robot_id=0;robot_id < robots_num;robot_id++) {
 		// vels
-		gpos->robots_pos[robot_id].vel_real.x = this->odom_msgs.at(robot_id).twist.twist.linear.x;
+		double cvx_x = this->odom_msgs.at(robot_id).twist.twist.linear.x;
+		double cvx_y = this->odom_msgs.at(robot_id).twist.twist.linear.y;
+		gpos->robots_pos[robot_id].vel_real.x = sqrt(cvx_x*cvx_x + cvx_y*cvx_y);
 		gpos->robots_pos[robot_id].vel_real.w = this->odom_msgs.at(robot_id).twist.twist.angular.z;
 		// poses (with convert from m to cm and revert y axis)
 		gpos->robots_pos[robot_id].pos_real.x = 100*(this->odom_msgs.at(robot_id).pose.pose.position.x);

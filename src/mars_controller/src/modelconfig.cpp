@@ -4,7 +4,7 @@ ModelConfig::ModelConfig(QObject *parent) : QObject(parent)
 {
     step = 0.001;
     interval = 10;
-    target_realtime_factor = 0.95;
+    target_realtime_factor = 0.9;
     vel_max = 0.5; // m/s
 
     step_max = 3;

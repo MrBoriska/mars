@@ -49,9 +49,10 @@ void ModelWorker::simulate()
             0.0,
             0.0,
             // target position (for next step)
-            QPointF(
+            QVector3D(
                 groupPos.robots_pos[robot_id].pos.x,
-                groupPos.robots_pos[robot_id].pos.y
+                groupPos.robots_pos[robot_id].pos.y,
+                groupPos.robots_pos[robot_id].pos.alfa
             ),
             // current time (relative to the start time)
             current_time
@@ -105,9 +106,10 @@ void ModelWorker::stop_simulate()
             robot_id,
             0.0,
             0.0,
-            QPointF(
+            QVector3D(
                 groupPos.robots_pos[robot_id].pos.x,
-                groupPos.robots_pos[robot_id].pos.y
+                groupPos.robots_pos[robot_id].pos.y,
+                groupPos.robots_pos[robot_id].pos.alfa
             ),
             current_time
         );
@@ -136,9 +138,10 @@ void ModelWorker::simulateStep()
                 robot_id,
                 0.0,
                 0.0,
-                QPointF(
+                QVector3D(
                     groupPos.robots_pos[robot_id].pos.x,
-                    groupPos.robots_pos[robot_id].pos.y
+                    groupPos.robots_pos[robot_id].pos.y,
+                    groupPos.robots_pos[robot_id].pos.alfa
                 ),
                 current_time
             );
@@ -156,6 +159,7 @@ void ModelWorker::simulateStep()
     // Блокируем доступ к памяти для других потоков
     mutex.lock();
     
+    GroupPos groupPos_start = config->getStartPosition();
     groupPos = trackMap.at(current_index);
 
     // send to ROS robots control system
@@ -167,9 +171,14 @@ void ModelWorker::simulateStep()
             groupPos.robots_pos[robot_id].vel.x,
             groupPos.robots_pos[robot_id].vel.w,
             // target position (for next step)
-            QPointF(
+            QVector3D(
                 groupPos.robots_pos[robot_id].pos.x,
-                groupPos.robots_pos[robot_id].pos.y
+                groupPos.robots_pos[robot_id].pos.y,
+                groupPos.robots_pos[robot_id].pos.alfa
+            ) - QVector3D(
+                groupPos_start.object_pos.pos.x,
+                groupPos_start.object_pos.pos.y,
+                0
             ),
             // current time (relative to the start time)
             current_time
@@ -399,7 +408,7 @@ QList<RobotState> ModelWorker::getRobotsStates(GroupPos grSt, double Vmax, doubl
             rpos.alfa = atan2(V.y(),V.x());
 
             // Кривизна траектории движения робота
-            rpos.k = (fabs(rpos.alfa)/rpos.alfa)/R_.length();
+            rpos.k = (fabs(K)/K)/R_.length();
 
             // Ориентация робота в с.к. карты
             rpos.alfa += alfa;

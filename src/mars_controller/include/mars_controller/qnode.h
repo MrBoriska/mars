@@ -9,7 +9,7 @@
 #include <string>
 #include <QThread>
 #include <QStringListModel>
-#include <QPointF>
+#include <QVector3D>
 #include <QList>
 #include <nav_msgs/Odometry.h>
 
@@ -32,7 +32,7 @@ public:
 	void run();
 
 	// sender command to move goal
-	void sendGoal(int robot_id, double vx, double w, QPointF goal_pos, long int rel_time);
+	void sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long int rel_time);
 
 	void setRealGroupPos(GroupPos *gpos);
 	// Callbacks
