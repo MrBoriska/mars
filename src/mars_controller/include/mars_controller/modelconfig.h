@@ -69,13 +69,15 @@ public:
      */
     double vel_max;
 
+
     /**
-     * @brief системные ограничения на параметры
+     * @brief Настройки регулятора движения по траектории
      */
-    double step_max;
-    double step_min;
-    int interval_max;
-    int interval_min;
+    double trajectory_P;
+    double trajectory_vP;
+    double trajectory_w_thres_offset;
+    double trajectory_w_thres;
+    double trajectory_wI;
 
 
     QGraphicsScene* sceneObject;

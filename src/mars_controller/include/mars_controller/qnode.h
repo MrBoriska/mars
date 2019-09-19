@@ -48,6 +48,10 @@ private:
 	QList<ros::Subscriber> odom_subs;
 	QList<nav_msgs::Odometry> odom_msgs;
 
+	double ey_p;
+	double ey_pp;
+	double U_p;
+
 };
 
 #endif /* QNODE_HPP_ */

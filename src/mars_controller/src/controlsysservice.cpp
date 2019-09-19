@@ -202,9 +202,15 @@ void ControlSysService::handler_set_track_path(QJsonObject msg)
 void ControlSysService::handler_set_config_data(QJsonObject msg)
 {
     ModelConfig* config = ModelConfig::Instance();
+    
     config->interval = msg.value("interval").toInt();
     config->step = msg.value("step").toDouble();
     config->vel_max = msg.value("vel_max").toDouble();
+    config->trajectory_P = msg.value("trajectory_P").toDouble();
+    config->trajectory_vP = msg.value("trajectory_vP").toDouble();
+    config->trajectory_w_thres = msg.value("trajectory_w_thres").toDouble();
+    config->trajectory_w_thres_offset = msg.value("trajectory_w_thres_offset").toDouble();
+    config->trajectory_wI = msg.value("trajectory_wI").toDouble();
 
     QSize size;
     size.setWidth(msg.value("scene_size").toObject().value("width").toInt());

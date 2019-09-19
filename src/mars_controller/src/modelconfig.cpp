@@ -7,10 +7,11 @@ ModelConfig::ModelConfig(QObject *parent) : QObject(parent)
     target_realtime_factor = 0.9;
     vel_max = 0.5; // m/s
 
-    step_max = 3;
-    step_min = 0.1;
-    interval_max = 10;
-    interval_min = 4;
+    trajectory_P = 1.00;
+    trajectory_vP = 10.00;
+    trajectory_w_thres_offset = 0.05;
+    trajectory_w_thres = 0.15;
+    trajectory_wI = 0.1;
 
     sceneSize = QSize(1000,700); // см х см
     sceneBorderWidth = 15;

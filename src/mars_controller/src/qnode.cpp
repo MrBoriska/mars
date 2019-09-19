@@ -15,7 +15,9 @@
 QNode::QNode(int argc, char** argv ) :
 	init_argc(argc),
 	init_argv(argv)
-	{}
+	{
+		
+	}
 
 QNode::~QNode() {
     if(ros::isStarted()) {
@@ -30,6 +32,7 @@ void QNode::robotposCallback(const nav_msgs::Odometry::ConstPtr& msg)
 	// checking frame id format
 	if (msg->header.frame_id.find("youbot") != 0)
 		return;
+
 	// get robot number by "youbotN/base_footprint" frame id
 	int robot_number = std::stoi(
 		msg->header.frame_id.substr(6, msg->header.frame_id.find("/"))
@@ -51,6 +54,9 @@ bool QNode::init(int robots_num) {
 	
 	// setting size (WTF?)
 	nav_msgs::Odometry odom_null;
+	ey_p = 0.0;
+	ey_pp = 0.0;
+	U_p = 0.0;
 
 	for(int i=0;i < robots_num;i++) {
 		// increase odom_msgs object size
@@ -85,7 +91,15 @@ void QNode::sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long
 	// Target velocity vector
 	geometry_msgs::Twist cmd_vel_msg;
 	cmd_vel_msg.linear.x = vx;
-	cmd_vel_msg.angular.z = w;	
+	cmd_vel_msg.angular.z = w;
+
+	if (vx == 0 && rel_time < 100) {
+		ey_pp = 0.0;
+		ey_p = 0.0;
+		U_p = 0.0;
+	}
+
+	ModelConfig* config = ModelConfig::Instance();	
 
 	if (vx != 0 || w != 0) {
 		// Current velocity vector (in global basis)
@@ -96,31 +110,57 @@ void QNode::sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long
 		// convert to robot basis (get x component, where y is zero)
 		double cvx = sqrt(cvx_x*cvx_x + cvx_y*cvx_y);
 
+		if (cvx == 0) {
+			cmd_vel_pubs[robot_id].publish(cmd_vel_msg);
+			return;
+		}
 		// Target position (with orientation)
 		double gx = goal_pos.x();
 		double gy = goal_pos.y();
-		double ga = goal_pos.z();
 
 		// Current position (with orientation)
-		double cx = 100*(this->odom_msgs.at(robot_id).pose.pose.position.x);
-		double cy = -100*(this->odom_msgs.at(robot_id).pose.pose.position.y);
-		double ca = atan2(cvx_y, cvx_x);
+		double cx = 100.0*(this->odom_msgs.at(robot_id).pose.pose.position.x);
+		double cy = -100.0*(this->odom_msgs.at(robot_id).pose.pose.position.y);
+
+		double ccos = cvx_x/cvx;
+		double csin = cvx_y/cvx;
 
 		//Calculate error vector
-		double ex = (gx-cx)*cos(ca)-(gy-cy)*sin(ca);
-		double ey = (gx-cx)*sin(ca)+(gy-cy)*cos(ca);
+		double ex = (gx-cx)*ccos-(gy-cy)*csin;
+		double ey = (gx-cx)*csin+(gy-cy)*ccos;
+		ey = -ey; //revert for y axis
 
-		qDebug() << "Angle: " << QString::number(ca*180/3.14)
-				 << "Err: x:"
+		// set error treshold
+		ex /= 100.0;
+		ey /= 100.0;
+
+		qDebug() << "(" << QString::number(robot_id) << ")Err: x:"
 		         << QString::number(ex)
 		         << " y:" << QString::number(ey);
 
-		double Pvx = 10.0;
-		double Pw = 10.0;
+		// Regulator settings
+		double T = double(config->interval)/1000.0;
+		double Kpvx = config->trajectory_vP;
+		double Kp = config->trajectory_P;
+		double Ki = config->trajectory_wI;
+		double Kd = config->trajectory_w_thres_offset;
+		double KI = Kp*Ki*T;
+		double KD = (Kp*Kd)/T;
 
-		// P regulator
-		cmd_vel_msg.linear.x += Pvx*ex;
-		cmd_vel_msg.angular.z -= Pw*ey;
+		// Simple P regulator
+		cmd_vel_msg.linear.x += Kpvx*(ex - config->trajectory_w_thres);
+
+		// Requrrent PID regulator
+		double U = U_p + Kp*(ey-ey_p) + KI*ey + KD*(ey-2*ey_p+ey_pp);
+		//double U = Kp*ey;
+		ey_pp = ey_p;
+		ey_p = ey;
+		U_p = U;
+
+		
+		if (rel_time > 2000) {
+			cmd_vel_msg.angular.z = U;
+		}
 
 		// set absolute restrictions
 		//if (cmd_vel_msg.linear.x > 0.6)
@@ -131,28 +171,17 @@ void QNode::sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long
 		//	cmd_vel_msg.angular.z = 3.0*abs(cmd_vel_msg.angular.z)/cmd_vel_msg.angular.z;
 
 		// set thresholds
-		double thres = 0.90;
+		double thres = config->trajectory_w_thres;
 		if (cmd_vel_msg.linear.x > vx*(thres+1))
 			cmd_vel_msg.linear.x = vx*(thres+1);
 		if (cmd_vel_msg.linear.x < vx*(1.0-thres))
 			cmd_vel_msg.linear.x = vx*(1.0-thres);
-		/*if (fabs(cmd_vel_msg.angular.z) > fabs(w)*(thres+1))
-			cmd_vel_msg.angular.z = fabs(w)*(thres+1)*fabs(cmd_vel_msg.angular.z)/cmd_vel_msg.angular.z;
-		if (fabs(cmd_vel_msg.angular.z) < fabs(w)*(1.0-thres))
-			cmd_vel_msg.angular.z = fabs(w)*(1.0-thres)*fabs(cmd_vel_msg.angular.z)/cmd_vel_msg.angular.z;
-		*/
-		if (w > 0) {
-			if (cmd_vel_msg.angular.z > w*(thres+1))
-				cmd_vel_msg.angular.z = w*(thres+1);
-			if (cmd_vel_msg.angular.z < w*(1.0-thres))
-				cmd_vel_msg.angular.z = w*(1.0-thres);
-		} else {
-			if (cmd_vel_msg.angular.z < w*(thres+1))
-				cmd_vel_msg.angular.z = w*(thres+1);
-			if (cmd_vel_msg.angular.z > w*(1.0-thres))
-				cmd_vel_msg.angular.z = w*(1.0-thres);
-		}
-
+		
+		double thres_if_w_0 = 3.0*cmd_vel_msg.linear.x;
+		if (cmd_vel_msg.angular.z > thres_if_w_0)
+			cmd_vel_msg.angular.z = thres_if_w_0;
+		if (cmd_vel_msg.angular.z < -thres_if_w_0)
+			cmd_vel_msg.angular.z = -thres_if_w_0;
 
 	}
 	cmd_vel_pubs[robot_id].publish(cmd_vel_msg);
