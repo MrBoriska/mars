@@ -1,3 +1,7 @@
+/*
+ *  controlsysservice.h
+ */
+
 #ifndef CONTROLSYSSERVICE_H
 #define CONTROLSYSSERVICE_H
 
@@ -13,7 +17,7 @@ class ControlSysService : public QObject
 {
     Q_OBJECT
 public:
-    explicit ControlSysService(QObject *parent = 0);
+    explicit ControlSysService(QObject *parent = nullptr);
     ~ControlSysService();
 
     void init();
@@ -54,6 +58,7 @@ private:
     void handler_get_pos();
     void handler_set_config_data(QJsonObject msg);
 
+    // Функции для конвертации внутренник типов данных в JSON и обратно
     QJsonArray tpath_to_jsonArray(QPainterPath tpath);
     QPainterPath jsonArray_to_tpath(QJsonArray ja);
     QJsonObject gpos_to_jsonObject(GroupPos gpos);

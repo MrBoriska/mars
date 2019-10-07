@@ -2,6 +2,7 @@
 
 ModelConfig::ModelConfig(QObject *parent) : QObject(parent)
 {
+    // Default values of params
     step = 0.001;
     interval = 10;
     target_realtime_factor = 0.9;
@@ -15,10 +16,12 @@ ModelConfig::ModelConfig(QObject *parent) : QObject(parent)
 
     sceneSize = QSize(1000,700); // см х см
     sceneBorderWidth = 15;
+    
+    // Create empty Map object
     sceneObject = new QGraphicsScene();
 
+    // Default materials database
     ItemMaterial mat;
-
     mat.color = QColor("#b5e3ea");
     mat.title = "Лёд";
     materials.append(mat);
@@ -37,9 +40,9 @@ ModelConfig::ModelConfig(QObject *parent) : QObject(parent)
     materials.append(mat);
 }
 
-ModelConfig* ModelConfig::_instance = 0;
+ModelConfig* ModelConfig::_instance = nullptr;
 ModelConfig* ModelConfig::Instance() {
-    if(_instance == 0) {
+    if(_instance == nullptr) {
         _instance = new ModelConfig;
     }
     return _instance;
@@ -93,9 +96,4 @@ ItemMaterial ModelConfig::getItemMaterialByColor(QColor color)
         }
     }
     return defaultMaterial;
-}
-
-void ModelConfig::reset()
-{
-
 }

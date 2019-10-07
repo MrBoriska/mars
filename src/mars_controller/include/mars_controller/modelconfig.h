@@ -50,7 +50,7 @@ class ModelConfig : public QObject
 {
     Q_OBJECT
 public:
-    explicit ModelConfig(QObject *parent = 0);
+    explicit ModelConfig(QObject *parent = nullptr);
     static ModelConfig* Instance();
 
     /**
@@ -79,26 +79,50 @@ public:
     double trajectory_w_thres;
     double trajectory_wI;
 
-
+    /**
+     * @brief Объект сцены (карты)
+     */
     QGraphicsScene* sceneObject;
-
-    void reset();
-
-    void setStartPosition(GroupPos s_pos);
-    GroupPos getStartPosition();
-    int getRobotsNum();
-
-    QList<ItemMaterial> materials;
-    ItemMaterial defaultMaterial;
-
-    QSize getSceneSize();
     void setSceneSize(QSize size);
+    QSize getSceneSize();
     double getSceneBorderWidth();
 
+    /**
+     * @brief Возвращает количество роботов
+     */
+    int getRobotsNum();
+
+    /**
+     * @brief Устанавливает начальную позицию роботов
+     */
+    void setStartPosition(GroupPos s_pos);
+    /**
+     * @brief Возвращает начальную позицию роботов
+     */
+    GroupPos getStartPosition();
+
+
+    /**
+     * @brief Устанавливает начальный вид траектории движения
+     */
+    void setTrackPath(QPainterPath tpath);
+    /**
+     * @brief Возвращает начальный вид траектории движения
+     */
+    QPainterPath getTrackPath();
+
+    
+    /**
+     * @brief Хранилище используемых материалов и их параметров
+     */
+    QList<ItemMaterial> materials;
+    ItemMaterial defaultMaterial;
+    
+    /**
+     * @brief Получает обьект с полной информацией о материле по его цвету на карте
+     */
     ItemMaterial getItemMaterialByColor(QColor color);
 
-    void setTrackPath(QPainterPath tpath);
-    QPainterPath getTrackPath();
 private:
     static ModelConfig* _instance;
 

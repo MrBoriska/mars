@@ -28,14 +28,17 @@ public:
 
 	// Init ROS node and loop
 	bool init(int robots_num);
-	// calling in new thread from start() function (into init() function)
+	
+	// Built-in method whitch calling in new thread from start() function (into init() function)
 	void run();
 
-	// sender command to move goal
+	// Send command to move goal
 	void sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long int rel_time);
 
+	// Set to gpos real robots position and velocity (with convert dimensions)
 	void setRealGroupPos(GroupPos *gpos);
-	// Callbacks
+	
+	// Callback function by robot position and velocity
 	void robotposCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
 Q_SIGNALS:
@@ -44,10 +47,15 @@ Q_SIGNALS:
 private:
 	int init_argc;
 	char** init_argv;
+
+	// ROS objects for communication
 	QList<ros::Publisher> cmd_vel_pubs;
 	QList<ros::Subscriber> odom_subs;
+
+	// Current robots position and velocity
 	QList<nav_msgs::Odometry> odom_msgs;
 
+	// accumulating coefficients for PID regulator 
 	double ey_p;
 	double ey_pp;
 	double U_p;

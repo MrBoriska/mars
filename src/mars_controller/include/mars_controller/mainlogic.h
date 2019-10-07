@@ -5,8 +5,11 @@
 
 #include "modelconfig.h"
 #include "modelworker.h"
+
+// include communication with GUI module
 #include "controlsysservice.h"
 
+// include communication with ROS tool
 #include "qnode.h"
 
 class MainLogic : public QObject

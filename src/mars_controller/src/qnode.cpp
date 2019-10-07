@@ -52,7 +52,7 @@ bool QNode::init(int robots_num) {
 	ros::start(); // explicitly needed since our nodehandle is going out of scope.
 	ros::NodeHandle n;
 	
-	// setting size (WTF?)
+	// setting size
 	nav_msgs::Odometry odom_null;
 	ey_p = 0.0;
 	ey_pp = 0.0;
@@ -72,7 +72,7 @@ bool QNode::init(int robots_num) {
 			)
 		);
 
-		// Init ROS subscriber for current robots positions
+		// Init ROS subscriber for current robots position
 		odom_subs.append(
 			n.subscribe(
 				robot_name + "/odom_abs",
@@ -85,7 +85,10 @@ bool QNode::init(int robots_num) {
 	start();
 	return true;
 }
-
+/**
+ * Функция для генерации управляющего воздействия
+ *  с учетом обратной связи по положению и эталонного вектора управления
+ */ 
 void QNode::sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long int rel_time) {
 	
 	// Target velocity vector
@@ -152,19 +155,15 @@ void QNode::sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long
 
 		// Requrrent PID regulator
 		double U = U_p + Kp*(ey-ey_p) + KI*ey + KD*(ey-2*ey_p+ey_pp);
-		//double U = Kp*ey;
 		ey_pp = ey_p;
 		ey_p = ey;
 		U_p = U;
 
-		
 		if (rel_time > 2000) {
 			cmd_vel_msg.angular.z = U;
 		}
 
 		// set absolute restrictions
-		//if (cmd_vel_msg.linear.x > 0.6)
-		//	cmd_vel_msg.linear.x = 0.6;
 		if (cmd_vel_msg.linear.x < 0)
 			cmd_vel_msg.linear.x = 0.0;
 		//if (abs(cmd_vel_msg.angular.z) > 3.0)
@@ -196,6 +195,7 @@ void QNode::setRealGroupPos(GroupPos *gpos) {
 		// vels
 		double cvx_x = this->odom_msgs.at(robot_id).twist.twist.linear.x;
 		double cvx_y = this->odom_msgs.at(robot_id).twist.twist.linear.y;
+		
 		gpos->robots_pos[robot_id].vel_real.x = sqrt(cvx_x*cvx_x + cvx_y*cvx_y);
 		gpos->robots_pos[robot_id].vel_real.w = this->odom_msgs.at(robot_id).twist.twist.angular.z;
 		// poses (with convert from m to cm and revert y axis)
@@ -211,6 +211,6 @@ void QNode::run() {
 		ros::spinOnce();
 		loop_rate.sleep();
 	}
-	emit rosShutdown(); // used to signal for a shutdown (useful to roslaunch)
+	emit rosShutdown();
 }
 

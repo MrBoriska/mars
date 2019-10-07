@@ -1,21 +1,27 @@
+/* -------------------------------------------------------------------
+ *  controlsysservice.cpp
+ * -------------------------------------------------------------------
+ */
+
 #include "mars_controller/controlsysservice.h"
 
 #include <QJsonDocument>
 #include <QJsonObject>
-
 
 ControlSysService::ControlSysService(QObject *parent) : QObject(parent)
 {
     cs_socket = 0;
     server = 0;
 }
+
 ControlSysService::~ControlSysService()
 {
     server->close();
 }
+
 void ControlSysService::init()
 {
-    server = new QWebSocketServer(QStringLiteral("Model demo server"),
+    server = new QWebSocketServer(QStringLiteral("MARS Controller Server"),
                                   QWebSocketServer::NonSecureMode, this);
 
     if(!server->listen(QHostAddress::LocalHost, 9999))
@@ -29,17 +35,12 @@ void ControlSysService::init()
         // whenever a user connects, it will emit signal
         connect(server, SIGNAL(newConnection()),
                 this,   SLOT(newConnection()));
-
-        //connect(server, SIGNAL(closed()),
-        //        this,   SLOT(closed()));
     }
 }
 
-
-
 void ControlSysService::newConnection()
 {
-    // Защита от второго подключения
+    // Защита от повторного подключения
     if (cs_socket != 0) {
         QWebSocket *socket = server->nextPendingConnection();
         socket->sendTextMessage("Client already connected\r\n");
@@ -57,7 +58,6 @@ void ControlSysService::newConnection()
     connect(cs_socket, SIGNAL(textMessageReceived(QString)),
              this,          SLOT(readyRead(QString)));
 
-    //cs_socket->waitForReadyRead();
     QJsonObject json;
     json.insert("type","ping");
     cs_socket->sendTextMessage(QJsonDocument(json).toJson());
@@ -72,12 +72,7 @@ void ControlSysService::client_disconnected()
 
 void ControlSysService::readyRead(QString strReply)
 {
-    //qDebug("readyRead: ");
-
     QString msg_type;
-
-    // Read new message
-    //QString strReply = (QString)(cs_socket->readAll());
 
     // Parse JSON
     QJsonParseError parse_error;
@@ -99,8 +94,6 @@ void ControlSysService::readyRead(QString strReply)
     // Get type of message
     msg_type = jsonObject.value("type").toString();
 
-    //qDebug() << jsonObject;
-
     // Call handlers
     if (msg_type == "ping")
     {
@@ -111,7 +104,7 @@ void ControlSysService::readyRead(QString strReply)
     }
     else if (msg_type == "pong") {}
     else if (msg_type == "error") {
-        // todo
+        qDebug() << jsonObject.value("info").toString();
     }
     else if (msg_type == "start_request") handler_start_request();
     else if (msg_type == "pause_request") handler_pause_request();
@@ -133,10 +126,7 @@ void ControlSysService::readyRead(QString strReply)
     }
 }
 
-/* ---------------------------------------------------------------
- * ЗАПУСК
- * ---------------------------------------------------------------
- */
+// Запуск
 void ControlSysService::send_started_event()
 {
     QJsonObject msg;
@@ -149,10 +139,7 @@ void ControlSysService::handler_start_request()
     //emit cs_started_error("Unknown error");
 }
 
-/* ---------------------------------------------------------------
- * ПАУЗА
- * ---------------------------------------------------------------
- */
+// Пауза
 void ControlSysService::send_paused_event()
 {
     QJsonObject msg;
@@ -165,10 +152,7 @@ void ControlSysService::handler_pause_request()
     emit cs_pause();
 }
 
-/* ---------------------------------------------------------------
- * ОСТАНОВКА
- * ---------------------------------------------------------------
- */
+// Остановка
 void ControlSysService::send_stopped_event()
 {
     QJsonObject msg;
@@ -181,12 +165,7 @@ void ControlSysService::handler_stop_request()
     emit cs_stop();
 }
 
-
-
-/* ---------------------------------------------------------------
- * Прием входных данных системы управления
- * ---------------------------------------------------------------
- */
+// Прием входных данных системы управления
 void ControlSysService::handler_set_start_pos(QJsonObject msg)
 {
     GroupPos start_pos = jsonObject_to_gpos(msg);
@@ -265,10 +244,7 @@ void ControlSysService::send_unready_event()
     cs_socket->sendTextMessage(QJsonDocument(msg).toJson());
 }
 
-/* ---------------------------------------------------------------
- * Функции для обработки запроса текущего положения роботов и груза
- * ---------------------------------------------------------------
- */
+// Функции для обработки запроса текущего положения роботов и груза
 void ControlSysService::handler_get_pos()
 {
     emit cs_get_pos_request();
@@ -282,10 +258,7 @@ void ControlSysService::send_positions(GroupPos gpos, qint64 time)
 }
 
 
-/* ---------------------------------------------------------------
- * Функции для преобразования из внутренних типов в json и обратно
- * ---------------------------------------------------------------
- */
+// Функции для преобразования из внутренних типов в json и обратно
 QJsonArray ControlSysService::tpath_to_jsonArray(QPainterPath tpath)
 {
     int length = tpath.elementCount();
@@ -298,7 +271,6 @@ QJsonArray ControlSysService::tpath_to_jsonArray(QPainterPath tpath)
             jo.insert("type", "LineTo");
         else {
             qDebug() << "Error! Unsupported element of track(QPainterPath)";
-            //return QJsonArray();
         }
 
         QPointF point = el;
@@ -326,7 +298,6 @@ QPainterPath ControlSysService::jsonArray_to_tpath(QJsonArray ja)
             );
         else {
             qDebug() << "Error! Unsupported element of track(QJsonArray)";
-            // return QPainterPath();
         }
     }
     return tpath;
