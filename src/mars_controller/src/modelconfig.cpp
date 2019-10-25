@@ -6,16 +6,21 @@ ModelConfig::ModelConfig(QObject *parent) : QObject(parent)
     step = 0.001;
     interval = 10;
     target_realtime_factor = 0.9;
-    vel_max = 0.5; // m/s
-
-    trajectory_P = 1.00;
-    trajectory_vP = 10.00;
-    trajectory_w_thres_offset = 0.05;
-    trajectory_w_thres = 0.15;
-    trajectory_wI = 0.1;
-
     sceneSize = QSize(1000,700); // см х см
     sceneBorderWidth = 15;
+
+    // Default parameters for trajectory regulator
+    robot_vmax = 0.5;
+    robot_wmax = 3.0;
+    robot_amax = 0.2;
+    trajectory_v_P = 100.0;
+    trajectory_v_I = 0.0;
+    trajectory_v_D = 0.0;
+    trajectory_w_P = 100.0;
+    trajectory_w_I = 0.0;
+    trajectory_w_D = 0.0;
+    trajectory_v_thres = 0.0;
+    trajectory_w_thres = 0.0;
     
     // Create empty Map object
     sceneObject = new QGraphicsScene();

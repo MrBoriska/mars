@@ -8,11 +8,10 @@
 
 #include <QGraphicsItem>
 
-ModelWorker::ModelWorker(ModelConfig *config_, QNode *qnode_, QObject *parent) : QObject(parent)
+ModelWorker::ModelWorker(QObject *parent) : QObject(parent)
 {
     timer = 0;
-    config = config_;
-    qnode = qnode_;
+    config = ModelConfig::Instance();
 
     started = false;
     current_time = 0;
@@ -24,15 +23,25 @@ ModelWorker::ModelWorker(ModelConfig *config_, QNode *qnode_, QObject *parent) :
     groupPos.object_pos.pos.k = 0.0;
     groupPos.object_pos.vel.x = 0.0;
     groupPos.object_pos.vel.w = 0.0;
-
 }
 
 ModelWorker::~ModelWorker()
 {
     if (timer->isActive()) timer->stop();
     delete timer;
+    qDebug() << "ModelWorker::~ModelWorker()";
 }
 
+void ModelWorker::deleteLater()
+{
+    qDebug() << "ModelWorker::deleteLater()";
+    QObject::deleteLater();
+}
+
+/**
+ * @brief ModelWorker::simulate
+ *        запускает процесс симуляции
+ */
 void ModelWorker::simulate()
 {
     qDebug() << "simulate()";
@@ -43,7 +52,7 @@ void ModelWorker::simulate()
     // send to ROS robots control system
     int units_count = groupPos.robots_pos.size();
     for (int robot_id = 0; robot_id < units_count; robot_id++) {
-        qnode->sendGoal(
+        emit newRobotGoal(
             robot_id,
             // velocity
             0.0,
@@ -59,6 +68,7 @@ void ModelWorker::simulate()
         );
     }
     
+    // Расчет траектории осуществляется предварительно
     genTrackPoints();
 
     if (timer == 0) {
@@ -72,11 +82,11 @@ void ModelWorker::simulate()
     emit simulateStarted();
 }
 
+/**
+ * @brief ModelWorker::pause_trigger
+ */
 void ModelWorker::pause_trigger()
 {
-    // Блокируем доступ к памяти для других потоков
-    //mutex.lock();
-
     if (timer->isActive()) {
         timer->stop();
     } else {
@@ -85,11 +95,14 @@ void ModelWorker::pause_trigger()
         timer->setInterval(config->interval/config->target_realtime_factor);
         timer->start();
     }
-
-    // Возвращаем доступ к памяти для других потоков
-    //mutex.unlock();
+    qDebug() << "ModelWorker::pause_trigger()";
 }
 
+/**
+ * @brief ModelWorker::stop_simulate
+ *        немедленно завершает процесс моделирования
+ *        предварительно отправляя сигнал остановки на роботы
+ */
 void ModelWorker::stop_simulate()
 {
     if (this->started && timer->isActive()) {
@@ -102,7 +115,7 @@ void ModelWorker::stop_simulate()
     // send to ROS robots control system
     int units_count = groupPos.robots_pos.size();
     for (int robot_id = 0; robot_id < units_count; robot_id++) {
-        qnode->sendGoal(
+        emit newRobotGoal(
             robot_id,
             0.0,
             0.0,
@@ -116,11 +129,13 @@ void ModelWorker::stop_simulate()
     }
 
     emit simulateStopped();
-    qDebug() << "simulateStopped()";
+    qDebug() << "ModelWorker::stop_simulate()";
 }
 
-
-
+/**
+ * @brief ModelWorker::simulateStep
+ *        выполняется по таймеру и обновляет состояние моделирования
+ */
 void ModelWorker::simulateStep()
 {
     // Завершение работы модели
@@ -134,7 +149,7 @@ void ModelWorker::simulateStep()
         // send to ROS robots control system
         int units_count = groupPos.robots_pos.size();
         for (int robot_id = 0; robot_id < units_count; robot_id++) {
-            qnode->sendGoal(
+            emit newRobotGoal(
                 robot_id,
                 0.0,
                 0.0,
@@ -165,7 +180,7 @@ void ModelWorker::simulateStep()
     // send to ROS robots control system
     int units_count = groupPos.robots_pos.size();
     for (int robot_id = 0; robot_id < units_count; robot_id++) {
-        qnode->sendGoal(
+        emit newRobotGoal(
             robot_id,
             // velocity
             groupPos.robots_pos[robot_id].vel.x,
@@ -192,6 +207,12 @@ void ModelWorker::simulateStep()
     mutex.unlock();
 }
 
+/**
+ * @brief ModelWorker::rotate
+ * @param v - исходный вектор
+ * @param a - угол поворота вектора (рад)
+ * @return повернутый на угол а вектор
+ */
 QVector2D ModelWorker::rotate(QVector2D v, qreal a) {
     return QVector2D(
         v.x()*cos(a)-v.y()*sin(a),
@@ -199,6 +220,16 @@ QVector2D ModelWorker::rotate(QVector2D v, qreal a) {
     );
 }
 
+/**
+ * @brief ModelWorker::catmullrom
+ * @param t - степень близости к концу участка кривой, "момент времени"
+ * @param u - параметр формы кривой
+ * @param P0 - первая контрольная точка сплайна
+ * @param P1 - вторая контрольная точка сплайна
+ * @param P2 - третья контрольная точка сплайна
+ * @param P3 - четвертая контрольная точка сплайна
+ * @return радиус вектор положения в момент t
+ */
 QPointF ModelWorker::catmullrom(long double t, double u, QPointF P0, QPointF P1, QPointF P2, QPointF P3) {
 
     double t2 = t*t;
@@ -212,6 +243,16 @@ QPointF ModelWorker::catmullrom(long double t, double u, QPointF P0, QPointF P1,
     return A*P0+B*P1+C*P2+D*P3;
 }
 
+/**
+ * @brief ModelWorker::catmullrom_speed
+ * @param t - степень близости к концу участка кривой, "момент времени"
+ * @param u - параметр формы кривой
+ * @param P0 - первая контрольная точка сплайна
+ * @param P1 - вторая контрольная точка сплайна
+ * @param P2 - третья контрольная точка сплайна
+ * @param P3 - четвертая контрольная точка сплайна
+ * @return радиус вектор скорости в момент t
+ */
 QVector2D ModelWorker::catmullrom_speed(long double t, double u, QPointF P0, QPointF P1, QPointF P2, QPointF P3) {
     double t2 = t*t;
 
@@ -223,6 +264,16 @@ QVector2D ModelWorker::catmullrom_speed(long double t, double u, QPointF P0, QPo
     return QVector2D(A*P0+B*P1+C*P2+D*P3);
 }
 
+/**
+ * @brief ModelWorker::catmullrom_acc
+ * @param t - степень близости к концу участка кривой, "момент времени"
+ * @param u - параметр формы кривой
+ * @param P0 - первая контрольная точка сплайна
+ * @param P1 - вторая контрольная точка сплайна
+ * @param P2 - третья контрольная точка сплайна
+ * @param P3 - четвертая контрольная точка сплайна
+ * @return радиус вектор ускорения в момент t
+ */
 QVector2D ModelWorker::catmullrom_acc(long double t, double u, QPointF P0, QPointF P1, QPointF P2, QPointF P3) {
 
     double A = 4.0*u-6.0*u*t;
@@ -233,6 +284,12 @@ QVector2D ModelWorker::catmullrom_acc(long double t, double u, QPointF P0, QPoin
     return QVector2D(A*P0+B*P1+C*P2+D*P3);
 }
 
+/**
+ * @brief ModelWorker::genRmax
+ * @param robots
+ * @param object_pos
+ * @return Rmax (см)
+ */
 double ModelWorker::genRmax(QList<RobotState> robots, ItemPos object_pos)
 {
     double Rmax = -1.0;
@@ -264,7 +321,6 @@ double ModelWorker::genRmax(QList<RobotState> robots, ItemPos object_pos)
     return Rmax;
 }
 
-
 /**
  * @brief ModelWorker::genVmax
  * @param robots
@@ -279,27 +335,27 @@ double ModelWorker::genVmax(QList<RobotState> robots, ItemPos object_pos, double
     GroupPos grSt_start = config->getStartPosition();
 
     // Максимальная заданная скорость
-    double V = config->vel_max;
+    double V = config->robot_vmax;
     double Vmax = V;
 
     int rc = robots.count();
 
     for(int i=0;i<rc;i++) {
-
+        
+        ItemMaterial mat;
+        
         // Find material object under robot
         QGraphicsPolygonItem* item = (QGraphicsPolygonItem *)(config->sceneObject->itemAt(
-                                          robots[i].pos.x,
-                                          robots[i].pos.y, QTransform()
-                                      ));
-        // todo!! this is BUG!
-        if (!item) {
-            return robots[i].vel.x;
-        }
-        
-        // Get material information
-        ItemMaterial mat = config->getItemMaterialByColor(item->brush().color());
+            robots[i].pos.x,
+            robots[i].pos.y, QTransform()
+        ));
 
-        // qDebug() << mat.title << "for " << i;
+        // Если материал не найден, то используем данные материала по умолчанию
+        if (!item) {
+            mat = config->getItemMaterialByColor(QColor());
+        } else {
+            mat = config->getItemMaterialByColor(item->brush().color());
+        }
 
         // По окружности
         if (object_pos.k != 0.0) {
@@ -320,9 +376,11 @@ double ModelWorker::genVmax(QList<RobotState> robots, ItemPos object_pos, double
             // Учет ограничения на максимальное нормальное ускорение
             V = sqrt(mat.accn_max*R)*Rmax/R;
             if (V < Vmax) Vmax = V;
+            
             // Учет ограничения на максимальное тангенциальное ускорение разгона
             V = double(robots[i].vel.x + mat.acct_max * dT)*Rmax/R;
             if (V < Vmax) Vmax = V;
+            
             // торможения
             V = double(robots[i].vel.x - mat.acct_max * dT)*Rmax/R;
             if (V > Vmax) Vmax = V;
@@ -332,17 +390,23 @@ double ModelWorker::genVmax(QList<RobotState> robots, ItemPos object_pos, double
             // Учет ограничения на максимальное тангенциальное ускорение разгона
             V = double(robots[i].vel.x + mat.acct_max * dT);
             if (V < Vmax) Vmax = V;
+            
             // торможения
             V = double(robots[i].vel.x - mat.acct_max * dT);
             if (V > Vmax) Vmax = V;
         }
     }
 
-
-
     return Vmax;
 }
 
+/**
+ * @brief ModelWorker::getRobotsStates
+ * @param grSt - неполное текущее состояние системы
+ * @param Vmax - (м/с) скорость самого быстрого робота
+ * @param Rmax - (cм) радиус до максимально удаленного от центра робота
+ * @return массив состояний роботов
+ */
 QList<RobotState> ModelWorker::getRobotsStates(GroupPos grSt, double Vmax, double Rmax) {
 
     GroupPos grSt_start = config->getStartPosition();
@@ -379,7 +443,6 @@ QList<RobotState> ModelWorker::getRobotsStates(GroupPos grSt, double Vmax, doubl
             grSt_start.robots_pos[k].pos.y-grSt_start.object_pos.pos.y
         );
 
-
         // Криволинейное движение
         if (K != 0.0) {
 
@@ -404,6 +467,7 @@ QList<RobotState> ModelWorker::getRobotsStates(GroupPos grSt, double Vmax, doubl
 
             // Ориентация вектора скорости робота (в с.к. обьекта)
             QVector2D V = rotate(R_,(fabs(K)/K)*M_PI/2).normalized();
+            
             // Ориентация робота соответственно (в с.к. обьекта)
             rpos.alfa = atan2(V.y(),V.x());
 
@@ -441,20 +505,27 @@ QList<RobotState> ModelWorker::getRobotsStates(GroupPos grSt, double Vmax, doubl
     return grSt.robots_pos;
 }
 
-// Generate object trajectory points
+/**
+ * @brief ModelWorker::genTrackPoints
+ *        Осуществляет расчет состояний системы для всех точек траектории
+ */
 void ModelWorker::genTrackPoints()
 {
     qDebug() << "genTrackPoints() // start";
     trackMap.clear();
 
+    // Начальный вектор состояния
     GroupPos grSt_start = config->getStartPosition();
     GroupPos grSt = grSt_start;
 
+    // Исходная траектория (точки пути)
     QPainterPath track_path = config->getTrackPath();
     int length = track_path.elementCount();
 
+    // Параметр формы кривой интерполяции
     double Tension = 0.5;
 
+    // Начальное значение контрольных точек сплайна
     QPointF P0;
     QPointF P1(grSt.object_pos.pos.x, grSt.object_pos.pos.y);
 
@@ -466,13 +537,14 @@ void ModelWorker::genTrackPoints()
             vector_next = QVector2D(track_path.elementAt(i+1)-track_path.elementAt(i));
         }
 
+        // Контрольные точки для сплайна описывающего траекторию
         if (i == 1) {
             P0 = P1-vector.toPointF();
         }
         QPointF P2 = P1+vector.toPointF();
         QPointF P3 = P2+vector_next.toPointF();
 
-
+        // Настройка дискретизации обработки траектории
         double dist = vector.length();
         qint64 steps = qint64(dist/config->step);
 
@@ -515,7 +587,8 @@ void ModelWorker::genTrackPoints()
                 QPointF pos;
                 QPointF dpos;
                 double ds = 0.0;
-                while (grSt.object_pos.vel.x && ds < grSt.object_pos.vel.x*config->interval/1000) {
+                while (grSt.object_pos.vel.x && ds < grSt.object_pos.vel.x*config->interval/1000.0) {
+                    // Степень близости к концу участка (от нуля до единицы)
                     p = (long double)j/steps;
                     if (p > 1) {
                         j--;
@@ -523,21 +596,24 @@ void ModelWorker::genTrackPoints()
                     }
                     pos = this->catmullrom(p,Tension,P0,P1,P2,P3);
                     dpos = pos - QPointF(grSt.object_pos.pos.x,grSt.object_pos.pos.y);
+                    
+                    // Расстояние между точками очень мало, аппроксимируем линией
                     ds = QVector2D(dpos).length()/100;
 
                     j++;
+                }
+
+                if (ds == 0.0) {
+                    qDebug() << "Error!!!!!!!";
+                    break;
                 }
 
                 if (p > 1) {
                     break;
                 }
 
-                //qDebug() << "K:" << K << "alfa0:" << alfa;
-
-
                 // Расчет векторов состояний роботов
                 grSt.robots_pos = getRobotsStates(grSt, Vmax, Rmax);
-
 
                 // Позиция обьекта управления для следующего шага
                 grSt.object_pos.pos.y = pos.y();
@@ -556,17 +632,12 @@ void ModelWorker::genTrackPoints()
         P1 = P2;
     }
 
+
+
     current_index = 0;
 
-    qDebug() << "genTrackPoints() // end";
+    qDebug() << "genTrackPoints() // end " << trackMap.length() << " points";
 }
-
-void ModelWorker::deleteLater()
-{
-    qDebug() << "deleteLater()";
-    QObject::deleteLater();
-}
-
 
 GroupPos ModelWorker::getCurrentPos() {
     return groupPos;

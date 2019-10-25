@@ -26,14 +26,11 @@ public:
 	QNode(int argc, char** argv);
 	virtual ~QNode();
 
-	// Init ROS node and loop
-	bool init(int robots_num);
+	// Init ROS communication
+	void init();
 	
 	// Built-in method whitch calling in new thread from start() function (into init() function)
 	void run();
-
-	// Send command to move goal
-	void sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long int rel_time);
 
 	// Set to gpos real robots position and velocity (with convert dimensions)
 	void setRealGroupPos(GroupPos *gpos);
@@ -41,12 +38,17 @@ public:
 	// Callback function by robot position and velocity
 	void robotposCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
-Q_SIGNALS:
+public slots:
+	// Send command to move goal
+	void sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long int rel_time);
+
+signals:
     void rosShutdown();
 
 private:
 	int init_argc;
 	char** init_argv;
+	ros::NodeHandle *nh;
 
 	// ROS objects for communication
 	QList<ros::Publisher> cmd_vel_pubs;

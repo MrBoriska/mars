@@ -184,12 +184,18 @@ void ControlSysService::handler_set_config_data(QJsonObject msg)
     
     config->interval = msg.value("interval").toInt();
     config->step = msg.value("step").toDouble();
-    config->vel_max = msg.value("vel_max").toDouble();
-    config->trajectory_P = msg.value("trajectory_P").toDouble();
-    config->trajectory_vP = msg.value("trajectory_vP").toDouble();
+    
+    config->robot_vmax = msg.value("robot_vmax").toDouble();
+    config->robot_wmax = msg.value("robot_wmax").toDouble();
+    config->robot_amax = msg.value("robot_amax").toDouble();
+    config->trajectory_v_P = msg.value("trajectory_v_P").toDouble();
+    config->trajectory_v_I = msg.value("trajectory_v_I").toDouble();
+    config->trajectory_v_D = msg.value("trajectory_v_D").toDouble();
+    config->trajectory_w_P = msg.value("trajectory_w_P").toDouble();
+    config->trajectory_w_I = msg.value("trajectory_w_I").toDouble();
+    config->trajectory_w_D = msg.value("trajectory_w_D").toDouble();
+    config->trajectory_v_thres = msg.value("trajectory_v_thres").toDouble();
     config->trajectory_w_thres = msg.value("trajectory_w_thres").toDouble();
-    config->trajectory_w_thres_offset = msg.value("trajectory_w_thres_offset").toDouble();
-    config->trajectory_wI = msg.value("trajectory_wI").toDouble();
 
     QSize size;
     size.setWidth(msg.value("scene_size").toObject().value("width").toInt());
@@ -207,6 +213,10 @@ void ControlSysService::handler_set_config_data(QJsonObject msg)
         config->materials.append(jsonObject_to_material(jo));
     }
 
+    config->defaultMaterial = config->getItemMaterialByColor(
+        QColor(msg.value("default_mat_color").toString())
+    );
+
     config->sceneObject->clear();
     QJsonArray map = msg.value("map").toArray();
     foreach(QJsonValue value, map) {
@@ -222,6 +232,7 @@ void ControlSysService::handler_set_config_data(QJsonObject msg)
             polygon_item->setPolygon(polygon);
             polygon_item->setPos(jsonObject_to_point(jo.value("pos").toObject()));
             polygon_item->setBrush(QBrush(QColor(jo.value("material").toString())));
+            polygon_item->setZValue(jo.value("z_value").toDouble());
 
             config->sceneObject->addItem(polygon_item);
         }
@@ -259,31 +270,6 @@ void ControlSysService::send_positions(GroupPos gpos, qint64 time)
 
 
 // Функции для преобразования из внутренних типов в json и обратно
-QJsonArray ControlSysService::tpath_to_jsonArray(QPainterPath tpath)
-{
-    int length = tpath.elementCount();
-    QJsonArray ja;
-    for(int i=0;i<length;i++) {
-        QJsonObject jo;
-        QPainterPath::Element el = tpath.elementAt(i);
-
-        if (el.isLineTo())
-            jo.insert("type", "LineTo");
-        else {
-            qDebug() << "Error! Unsupported element of track(QPainterPath)";
-        }
-
-        QPointF point = el;
-        QJsonObject jpoint;
-        jpoint.insert("x", point.x());
-        jpoint.insert("y", point.y());
-        jo.insert("point", jpoint);
-
-        ja.append(jo);
-    }
-
-    return ja;
-}
 QPainterPath ControlSysService::jsonArray_to_tpath(QJsonArray ja)
 {
     QPainterPath tpath;

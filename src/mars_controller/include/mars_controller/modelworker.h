@@ -6,14 +6,13 @@
 #include <QTime>
 
 #include "modelconfig.h"
-#include "qnode.h"
 
 class ModelWorker: public QObject
 {
     Q_OBJECT
 
 public:
-    ModelWorker(ModelConfig *config, QNode *qnode, QObject *parent = nullptr);
+    ModelWorker(QObject *parent = nullptr);
     ~ModelWorker();
 
     GroupPos getCurrentPos();
@@ -33,12 +32,10 @@ signals:
     void simulateStarted();
     void simulateFinished();
     void simulateStopped();
+    void newRobotGoal(int robot_id, double vx, double w, QVector3D goal_pos, long int rel_time);
 
 private:
     QTimer *timer;
-
-    // Object for communication with ROS
-    QNode *qnode;
     
     // All configuration data for robots group
     ModelConfig *config;

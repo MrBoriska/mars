@@ -18,7 +18,6 @@ class MainLogic : public QObject
 public:
     explicit MainLogic(int, char**, QObject *parent = 0);
 
-    QThread *modelThread;
     ModelWorker *modelWorker;
     ModelConfig *modelConfig;
     ControlSysService *cs_service;
@@ -36,7 +35,7 @@ public slots:
     void cs_get_pos_request();
 
 private:
-    QNode qnode;
+    QNode *qnode;
 
 };
 

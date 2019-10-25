@@ -8,32 +8,44 @@
 
 #include <QDebug>
 
-/*****************************************************************************
-** Implementation
-*****************************************************************************/
-
 QNode::QNode(int argc, char** argv ) :
 	init_argc(argc),
 	init_argv(argv)
 	{
-		
+		ros::init(init_argc,init_argv,"mars_controller_node");
+		if ( ! ros::master::check() ) {
+			ROS_ERROR("Do not start node. ROS Master process not found!");
+			return;
+		}
+
+		ros::start();
+		nh = new ros::NodeHandle();
+
+		start();
 	}
 
 QNode::~QNode() {
     if(ros::isStarted()) {
-      ros::shutdown(); // explicitly needed since we use ros::start();
-      ros::waitForShutdown();
+		ros::shutdown();
+
+		qDebug() << "~QNode() Wait for shutdown ROS!";
+		ros::waitForShutdown();
     }
+	qDebug() << "QNode::~QNode() (ros not start)";
 	wait();
 }
-
+/**
+ * @breif QNode::robotposCallback
+ * 		  Принимает данные о реальном состоянии системы (положение и скорость)
+ * @param msg
+ */
 void QNode::robotposCallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
 	// checking frame id format
 	if (msg->header.frame_id.find("youbot") != 0)
 		return;
 
-	// get robot number by "youbotN/base_footprint" frame id
+	// get robot number by "youbot{N}/****" frame id
 	int robot_number = std::stoi(
 		msg->header.frame_id.substr(6, msg->header.frame_id.find("/"))
 	);
@@ -43,20 +55,22 @@ void QNode::robotposCallback(const nav_msgs::Odometry::ConstPtr& msg)
 	this->odom_msgs[robot_number] = *msg;
 }
 
-bool QNode::init(int robots_num) {
-	ros::init(init_argc,init_argv,"mars_controller_node");
-	if ( ! ros::master::check() ) {
-		return false;
-	}
-
-	ros::start(); // explicitly needed since our nodehandle is going out of scope.
-	ros::NodeHandle n;
+/**
+ * @breif QNode::init
+ * 		  Осуществляет инициализацию коммуникации ноды с топиками ROS
+ */
+void QNode::init() {
+	int robots_num = ModelConfig::Instance()->getRobotsNum();
 	
 	// setting size
 	nav_msgs::Odometry odom_null;
 	ey_p = 0.0;
 	ey_pp = 0.0;
 	U_p = 0.0;
+	
+	cmd_vel_pubs.clear();
+	odom_subs.clear();
+	odom_msgs.clear();
 
 	for(int i=0;i < robots_num;i++) {
 		// increase odom_msgs object size
@@ -66,7 +80,7 @@ bool QNode::init(int robots_num) {
 
 		// Init ROS velocity commands publishers
 		cmd_vel_pubs.append(
-			n.advertise<geometry_msgs::Twist>(
+			nh->advertise<geometry_msgs::Twist>(
 				robot_name + "/cmd_vel",
 				1000
 			)
@@ -74,20 +88,24 @@ bool QNode::init(int robots_num) {
 
 		// Init ROS subscriber for current robots position
 		odom_subs.append(
-			n.subscribe(
+			nh->subscribe(
 				robot_name + "/odom_abs",
 				1,
 				&QNode::robotposCallback, this
 			)
 		);
 	}
-
-	start();
-	return true;
 }
+
 /**
- * Функция для генерации управляющего воздействия
- *  с учетом обратной связи по положению и эталонного вектора управления
+ * @brief QNode::sendGoal
+ *        Функция для генерации управляющего воздействия на роботы
+ *        с учетом обратной связи по положению и эталонного вектора управления
+ * @param robot_id - 
+ * @param vx - целевая линейная скорость
+ * @param w - целевая угловая скорость
+ * @param goal_pos - целевое положение в текущий момент времени
+ * @param rel_time - текущее время (с)
  */ 
 void QNode::sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long int rel_time) {
 	
@@ -110,13 +128,14 @@ void QNode::sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long
 		double cvx_y = this->odom_msgs.at(robot_id).twist.twist.linear.y;
 		double cw = this->odom_msgs.at(robot_id).twist.twist.angular.z;
 
-		// convert to robot basis (get x component, where y is zero)
+		// convert to robot basis (get "x" component, where "y" is zero)
 		double cvx = sqrt(cvx_x*cvx_x + cvx_y*cvx_y);
 
 		if (cvx == 0) {
 			cmd_vel_pubs[robot_id].publish(cmd_vel_msg);
 			return;
 		}
+
 		// Target position (with orientation)
 		double gx = goal_pos.x();
 		double gy = goal_pos.y();
@@ -137,21 +156,17 @@ void QNode::sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long
 		ex /= 100.0;
 		ey /= 100.0;
 
-		qDebug() << "(" << QString::number(robot_id) << ")Err: x:"
-		         << QString::number(ex)
-		         << " y:" << QString::number(ey);
-
 		// Regulator settings
 		double T = double(config->interval)/1000.0;
-		double Kpvx = config->trajectory_vP;
-		double Kp = config->trajectory_P;
-		double Ki = config->trajectory_wI;
-		double Kd = config->trajectory_w_thres_offset;
+		double Kpvx = config->trajectory_v_P;
+		double Kp = config->trajectory_w_P;
+		double Ki = config->trajectory_w_I;
+		double Kd = config->trajectory_w_D;
 		double KI = Kp*Ki*T;
 		double KD = (Kp*Kd)/T;
 
 		// Simple P regulator
-		cmd_vel_msg.linear.x += Kpvx*(ex - config->trajectory_w_thres);
+		cmd_vel_msg.linear.x += Kpvx*(ex - 0.15);
 
 		// Requrrent PID regulator
 		double U = U_p + Kp*(ey-ey_p) + KI*ey + KD*(ey-2*ey_p+ey_pp);
@@ -159,30 +174,28 @@ void QNode::sendGoal(int robot_id, double vx, double w, QVector3D goal_pos, long
 		ey_p = ey;
 		U_p = U;
 
-		if (rel_time > 2000) {
-			cmd_vel_msg.angular.z = U;
-		}
+		// Small timeout for stability
+		if (rel_time > 1000) cmd_vel_msg.angular.z = U;
 
 		// set absolute restrictions
 		if (cmd_vel_msg.linear.x < 0)
 			cmd_vel_msg.linear.x = 0.0;
-		//if (abs(cmd_vel_msg.angular.z) > 3.0)
-		//	cmd_vel_msg.angular.z = 3.0*abs(cmd_vel_msg.angular.z)/cmd_vel_msg.angular.z;
 
-		// set thresholds
-		double thres = config->trajectory_w_thres;
+		// set thresholds for lenear velocity
+		double thres = config->trajectory_v_thres;
 		if (cmd_vel_msg.linear.x > vx*(thres+1))
 			cmd_vel_msg.linear.x = vx*(thres+1);
 		if (cmd_vel_msg.linear.x < vx*(1.0-thres))
 			cmd_vel_msg.linear.x = vx*(1.0-thres);
 		
+		// set thresholds for angular velocity
 		double thres_if_w_0 = 3.0*cmd_vel_msg.linear.x;
 		if (cmd_vel_msg.angular.z > thres_if_w_0)
 			cmd_vel_msg.angular.z = thres_if_w_0;
 		if (cmd_vel_msg.angular.z < -thres_if_w_0)
 			cmd_vel_msg.angular.z = -thres_if_w_0;
-
 	}
+
 	cmd_vel_pubs[robot_id].publish(cmd_vel_msg);
 }
 
@@ -211,6 +224,8 @@ void QNode::run() {
 		ros::spinOnce();
 		loop_rate.sleep();
 	}
+	
+	qDebug() << "Shutdown by ROS thread";
 	emit rosShutdown();
 }
 

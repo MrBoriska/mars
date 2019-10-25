@@ -65,19 +65,23 @@ public:
     double target_realtime_factor;
 
     /**
-     * @brief максимальная скорость робота(которую он стремится достичь)
+     * @brief общие ограничения на перемещение
      */
-    double vel_max;
-
+    double robot_vmax;
+    double robot_wmax;
+    double robot_amax;
 
     /**
      * @brief Настройки регулятора движения по траектории
      */
-    double trajectory_P;
-    double trajectory_vP;
-    double trajectory_w_thres_offset;
+    double trajectory_v_P;
+    double trajectory_v_I;
+    double trajectory_v_D;
+    double trajectory_w_P;
+    double trajectory_w_I;
+    double trajectory_w_D;
+    double trajectory_v_thres;
     double trajectory_w_thres;
-    double trajectory_wI;
 
     /**
      * @brief Объект сцены (карты)
@@ -96,11 +100,11 @@ public:
      * @brief Устанавливает начальную позицию роботов
      */
     void setStartPosition(GroupPos s_pos);
+    
     /**
      * @brief Возвращает начальную позицию роботов
      */
     GroupPos getStartPosition();
-
 
     /**
      * @brief Устанавливает начальный вид траектории движения
@@ -111,7 +115,6 @@ public:
      */
     QPainterPath getTrackPath();
 
-    
     /**
      * @brief Хранилище используемых материалов и их параметров
      */
